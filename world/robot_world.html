@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+            background-color: #000000;
+        }
+    </style>
+
+    <title>Robots' world</title>
+
+    <script type="text/javascript" src="libs/three.js"></script>
+    <script type="text/javascript" src="libs/stats.min.js"></script>
+    <script type="text/javascript" src="libs/physi.js"></script>
+    <script type="text/javascript" src="libs/dat.gui.js"></script>
+    <script type="text/javascript" src="libs/chroma.js"></script>
+    <script type="text/javascript" src="libs/jquery-2.1.4.min.js"></script>
+
+    <script type="text/javascript">
+
+        'use strict';
+        
+        var RobotManagerUrl = "http://127.0.0.1:9080/update";
+
+        Physijs.scripts.worker = 'libs/physijs_worker.js';
+        Physijs.scripts.ammo = 'ammo.js';
+
+        var scale = chroma.scale(['white', 'blue', 'red', 'yellow']);
+
+        var initScene, render, applyForce, setMousePosition, mouse_position,
+            ground_material, box_material,
+            projector, renderer, render_stats, physics_stats, scene, ground, light, camera, alt_camera, box, boxes = [];
+            
+        var controls, axisHelper;
+        
+        initScene = function () {
+          
+            renderer = new THREE.WebGLRenderer({antialias: true, preserveDrawingBuffer: true});
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            renderer.setClearColor(new THREE.Color(0x000000));
+            renderer.shadowMapEnabled = true;
+
+            document.getElementById('viewport').appendChild(renderer.domElement);
+
+            render_stats = new Stats();
+            render_stats.domElement.style.position = 'absolute';
+            render_stats.domElement.style.top = '1px';
+            render_stats.domElement.style.left = '1px';
+            render_stats.domElement.style.zIndex = 100;
+            document.getElementById('viewport').appendChild(render_stats.domElement);
+
+            scene = new Physijs.Scene({reportSize: 10, fixedTimeStep: 1 / 60});
+            
+            scene.addEventListener( 'update', function() {
+                
+                robot.sonar.arrowHelper.position.copy(robot.sonar.body.position);
+                
+                var dir = new THREE.Vector3(
+                  robot.sonar.body.position.x - robot.body.position.x,
+                  robot.sonar.body.position.y - (robot.body.position.y + 1.2),
+                  robot.sonar.body.position.z - robot.body.position.z
+                  );
+                  
+                robot.sonar.direction = dir.normalize();
+                
+                robot.sensors.orientation = Math.atan2(robot.sonar.direction.x, robot.sonar.direction.z) * (180/Math.PI) +180;
+                
+                robot.sonar.arrowHelper.setDirection(robot.sonar.direction);
+
+                robot.sonar.raycaster.set(robot.sonar.body.position, robot.sonar.direction, 2, 400);
+
+                var intersects = robot.sonar.raycaster.intersectObjects( scene.children );
+                
+                if (intersects.length > 0)
+                {
+                  robot.sonar.value = intersects[0].distance;
+                  if ( robot.sonar.value<2 )
+                  {
+                    robot.sonar.value = 9999; // sometimes it intersects itself, when moving backward -- this is just a quick hack
+                  }
+                  
+                  robot.sonar.arrowHelperChecker.visible = controls.showSonarDetection;
+                  
+                  robot.sonar.arrowHelperChecker.position.x = intersects[0].point.x;
+                  robot.sonar.arrowHelperChecker.position.y = intersects[0].point.y;
+                  robot.sonar.arrowHelperChecker.position.z = intersects[0].point.z;                  
+                }
+                else
+                {
+                  robot.sonar.value = 9999;
+                }
+                
+                robot.sensors.sonar = robot.sonar.value;
+                
+                var posting = $.post( RobotManagerUrl, JSON.stringify(robot.sensors), function() {
+                  // alert( "success" );
+                  })
+                .done(function(data) {
+                  robot.actuators = data;
+                  robot.update();
+                  
+                  robot.flConstraint.configureAngularMotor(2, 0.1, 0, robot.actuators.leftEngine, 15000);
+                  robot.frConstraint.configureAngularMotor(2, 0.1, 0, robot.actuators.rightEngine, 15000);
+                                    
+                })
+                  .fail(function() {
+                    console.log("error...");
+                    //robot.material.color.setHex(0xaaaaaa);
+                })
+                .always(function() {
+                  //alert( "finished" );
+              });
+              
+              var relativeCameraOffset = new THREE.Vector3(20,5,0);
+
+              var cameraOffset = relativeCameraOffset.applyMatrix4( robot.sonar.body.matrixWorld );
+
+              robot.camera.position.x = cameraOffset.x;
+              robot.camera.position.y = cameraOffset.y;
+              robot.camera.position.z = cameraOffset.z;
+              robot.camera.lookAt( robot.sonar.body.position );
+
+            });
+
+            scene.setGravity(new THREE.Vector3(0, -9.81, 0));
+
+            camera = new THREE.PerspectiveCamera(
+                35,
+                window.innerWidth / window.innerHeight,
+                1,
+                1000
+            );
+            
+            /*
+            var factor = 30;
+            var width = factor*window.innerWidth / window.innerHeight;
+            var height = factor;
+            camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2, -1000, 1000 );
+            */
+                      
+            camera.position.set(-183, 200, -126);
+            //camera.position.set(12, 21, -40);
+            camera.lookAt(new THREE.Vector3(0, 0, 0));
+            
+            scene.add(camera);
+
+            // Light
+            light = new THREE.SpotLight(0xFFFFFF, 2);
+            light.position.set(120, 70, 100);
+            light.castShadow = true;
+            light.shadowMapDebug = true;
+            light.shadowCameraNear = 10;
+            light.shadowCameraFar = 300;
+
+            scene.add(light);
+            
+            var meshes = [];
+
+            createGround( {borderHeight: 4} );
+            var robot = createRobot();
+            
+            alt_camera = robot.camera;
+
+            axisHelper = new THREE.AxisHelper(10);
+            scene.add(axisHelper);
+            axisHelper.visible = false;
+
+            controls = new function () {
+                
+                this.camX = camera.position.x;
+                this.camY = camera.position.y;
+                this.camZ = camera.position.z;
+
+                this.changeCamera = function () {
+                    camera.position.set(controls.camX, controls.camY, controls.camZ);
+                    camera.lookAt(new THREE.Vector3(0, 0, 0));
+                }
+                
+                this.addBoxMesh = function () {
+                    var cube = new Physijs.BoxMesh(
+                        new THREE.BoxGeometry(16, 10, 14),
+                        getMaterial(),
+                        100
+                    );
+                    setPosAndShade(cube);
+                    scene.add(cube, 2);
+                };
+                
+                this.addSphereMesh = function () {
+                    var sphere = new Physijs.SphereMesh(
+                        new THREE.SphereGeometry(6, 32),
+                        getMaterial(),
+                        200
+                    );
+                    setPosAndShade(sphere);
+                    scene.add(sphere);
+                };
+                
+                this.openController = function () {
+                  window.open('../controllers/robot.html', 'Sample Controller', 'width=200, height=400');
+                  };
+                  
+                this.useRobotCamera = false;
+                
+                this.takeScreenshot = function() {
+                  var dataUrl = renderer.domElement.toDataURL("image/png");
+                  console.log (dataUrl);
+                  }
+                
+                this.simulate = false;
+                
+                this.showAxis = false;
+                
+                this.showSonarDetection = false;
+                
+            };
+
+            var gui = new dat.GUI();
+            gui.add(controls, 'camX', -200, 200).onChange(controls.changeCamera);
+            gui.add(controls, 'camY', -200, 200).onChange(controls.changeCamera);
+            gui.add(controls, 'camZ', -200, 200).onChange(controls.changeCamera);
+            gui.add(controls, 'addBoxMesh');
+            gui.add(controls, 'addSphereMesh');
+            gui.add(controls, 'openController');
+            gui.add(controls, 'useRobotCamera');
+            gui.add(controls, 'takeScreenshot');
+            gui.add(controls, 'simulate');
+            gui.add(controls, 'showAxis');
+            gui.add(controls, 'showSonarDetection');
+            
+            requestAnimationFrame(render);
+        };
+
+        function getMaterial() {
+            var material = Physijs.createMaterial(
+                    new THREE.MeshLambertMaterial(
+                            {
+                                color: scale(Math.random()).hex(),
+                                // opacity: 0.8,
+                                // transparent: true
+                            }), 0.5, 0.7);
+
+            return material;
+        }
+
+        function setPosAndShade(obj) {
+            obj.position.set(
+                    Math.random() * 100 - 50,
+                    15,
+                    Math.random() * 100 - 50
+            );
+
+            obj.rotation.set(Math.random() * 2 * Math.PI, Math.random() * 2 * Math.PI, Math.random() * 2 * Math.PI);
+            obj.castShadow = true;
+        }
+
+        function createWheel(position, radius, thickness, mass) {
+          
+            /*
+            var wheel_material = Physijs.createMaterial(
+                    new THREE.MeshLambertMaterial({color: 0xF8F82C, opacity: 0.9, transparent: true}),
+                    1.0, // high friction
+                    .5 // medium restitution
+            );
+            */
+            
+            var wheel_material = Physijs.createMaterial(
+                    new THREE.MeshPhongMaterial(
+                        {
+                          map: THREE.ImageUtils.loadTexture('assets/textures/robot/wheel.png'),
+                        }),
+                    1, // high friction
+                    0 // low restitution
+            );
+            
+
+            var wheel_geometry = new THREE.CylinderGeometry(radius, radius, thickness, 32);
+            var wheel = new Physijs.CylinderMesh(
+                wheel_geometry,
+                wheel_material,
+                mass
+            );
+
+            wheel.rotation.x = Math.PI / 2;
+            wheel.castShadow = true;
+            wheel.position.copy(position);
+            return wheel;
+        }
+
+
+        function createRobot() {
+            var robot = {};
+            
+            robot.camera = new THREE.PerspectiveCamera(
+                35,
+                window.innerWidth / window.innerHeight,
+                1,
+                1000
+            );
+            
+            robot.camera.position.set(0, 10, 40);
+            robot.camera.lookAt(new THREE.Vector3(0, 0, 0));
+            scene.add(robot.camera);
+           
+            robot.sonar = {
+              raycaster : new THREE.Raycaster(),
+              direction: new THREE.Vector3( -1, 0, 0), 
+              };
+            
+            robot.sensors = { sonar: 0 };
+            robot.actuators = { };
+            
+            robot.update = function() {
+              if (robot.actuators.led == 1)
+              {
+                robot.sonar.body.material.emissive.setHex(0xaa0000);
+              }
+              else
+              {
+                robot.sonar.body.material.emissive.setHex(0x222222);
+              }
+            }
+            
+            var robot_material = Physijs.createMaterial(
+                    new THREE.MeshLambertMaterial({color: 0xC1F5F6, opacity: 0.4, transparent: true}),
+                    .5, // high friction
+                    .5 // medium restitution
+            );
+
+            var sonar_material = Physijs.createMaterial(
+                    new THREE.MeshPhongMaterial({color: 0x222222, emissive: 0x222222, transparent: false}),
+                    1,
+                    0
+            );
+
+            var lw_material = Physijs.createMaterial(
+                    new THREE.MeshLambertMaterial({color: 0xC1F5F6, opacity: 1, transparent: true}),
+                    .01, // very low friction
+                    0 // low restitution
+            );
+
+            // create the robot body
+            var chassis = new THREE.BoxGeometry(15.4, .4, 9.7);
+            
+            robot.body = new Physijs.BoxMesh(chassis, robot_material, 345);  // 345 g 
+            robot.body.position.set(0, 5.1, 0);
+            robot.body.castShadow = true;
+            scene.add(robot.body);
+
+            var xo = (15.4/2-3.6), yo = 3.6;
+
+            // create the wheels
+            var fr = createWheel(new THREE.Vector3(xo, yo, -6.5), 3.6, 2.5, 300);
+            var fl = createWheel(new THREE.Vector3(xo, yo, 6.5), 3.6, 2.5, 300);
+            
+            // The little spherical front wheel
+            var lw = new Physijs.SphereMesh(
+                new THREE.SphereGeometry(1.4, 32),
+                lw_material,
+                400
+            );
+            
+            lw.position.x = -7;
+            lw.position.y = 1.4;
+            lw.position.z = 0;
+            
+            
+            // add the wheels to the scene
+            scene.add(fr);
+            scene.add(fl);
+            scene.add(lw);
+
+            var frConstraint = createWheelConstraint(fr, robot.body, new THREE.Vector3(xo, yo, -6.5));
+            scene.addConstraint(frConstraint, true);
+
+            var flConstraint = createWheelConstraint(fl, robot.body, new THREE.Vector3(xo, yo, 6.5));
+            scene.addConstraint(flConstraint, true);
+
+            frConstraint.setAngularLowerLimit({x: 0, y: 0, z: 0});
+            frConstraint.setAngularUpperLimit({x: 0, y: 0, z: 0});
+            flConstraint.setAngularLowerLimit({x: 0, y: 0, z: 0});
+            flConstraint.setAngularUpperLimit({x: 0, y: 0, z: 0});
+
+            // if you add a motor, the current constraint is overridden
+            // if you want to rotate set min higher then max
+            flConstraint.configureAngularMotor(2, 0.1, 0, 0, 1500);
+            frConstraint.configureAngularMotor(2, 0.1, 0, 0, 1500);
+            
+            flConstraint.enableAngularMotor(2);
+            frConstraint.enableAngularMotor(2);
+
+            robot.flConstraint = flConstraint;
+            robot.frConstraint = frConstraint;
+
+            var lwConstraint = createWheelConstraint(robot.body, lw, lw.position);
+            scene.addConstraint(lwConstraint, false);
+
+            lwConstraint.setLinearLowerLimit({x: 0, y: 0, z: 0});
+            lwConstraint.setLinearUpperLimit({x: 0, y: 0, z: 0});
+            lwConstraint.setAngularLowerLimit({x: -Math.PI, y: -Math.PI, z: -Math.PI});
+            lwConstraint.setAngularUpperLimit({x: Math.PI, y: Math.PI, z: Math.PI});
+
+            robot.position = robot.body.position;
+            
+            // create the sonar
+            var sonarGeometry = new THREE.BoxGeometry(.6, 2, 3);
+            
+            robot.sonar.body = new Physijs.BoxMesh(sonarGeometry, sonar_material, 200);
+            robot.sonar.body.position.set(-6, 6.3, 0);
+            robot.sonar.body.castShadow = true;
+            scene.add(robot.sonar.body);
+            var hex = 0xffff00;
+            
+            var sonarConstraint = new Physijs.SliderConstraint(
+                robot.sonar.body, // First object to be constrained
+                robot.body, // OPTIONAL second object - if omitted then physijs_mesh_1 will be constrained to the scene
+                robot.sonar.body.position, // point in the scene to apply the constraint
+                new THREE.Vector3( 0, 0, 1 ) // Axis along which the hinge lies - in this case it is the X axis
+            );
+            scene.addConstraint( sonarConstraint, false );
+            sonarConstraint.setLimits(0,0,0,0);
+            
+            robot.sonar.arrowHelper = new THREE.ArrowHelper( robot.sonar.direction, robot.sonar.body.position, 30, hex );
+            scene.add( robot.sonar.arrowHelper );
+            
+            robot.sonar.arrowHelperChecker = new THREE.ArrowHelper( new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,0), 10, 0x990099 );
+            robot.sonar.arrowHelperChecker.visible = false;
+            scene.add( robot.sonar.arrowHelperChecker );
+            
+            return robot;
+        }
+
+        function createWheelConstraint(wheel, body, position) {
+            var constraint = new Physijs.DOFConstraint(
+                    wheel, body, position);
+
+            return constraint;
+        }
+
+        function createGround(options) {
+          
+            var length = 120;
+            var width = 120;
+            // Materials
+            
+            ground_material = Physijs.createMaterial(
+                    new THREE.MeshPhongMaterial(
+                        {
+                          map: THREE.ImageUtils.loadTexture('assets/textures/general/floor_stones.jpg'),
+                          //side: THREE.DoubleSide
+                        }),
+                    1, // high friction
+                    0 // high restitution
+            );
+          
+
+            /*            
+            ground_material = Physijs.createMaterial(
+                    new THREE.MeshLambertMaterial(
+                            {
+                                color: 0xffff00,
+                                opacity: .6,
+                                transparent: false,
+                            }),
+                    1, // high friction
+                    .7 // low restitution
+            );
+            */          
+            // Ground
+            ground = new Physijs.BoxMesh(
+                    new THREE.BoxGeometry(length, 2, width),
+                    ground_material,
+                    0 // mass
+            );
+
+            ground.position.y = -1;
+            ground.receiveShadow = true;
+
+
+            var borderLeft = new Physijs.BoxMesh(
+                    new THREE.BoxGeometry(2, options.borderHeight, width),
+                    ground_material,
+                    0 // mass
+            );
+
+            borderLeft.position.x = -1 * length / 2 - 1;
+            borderLeft.position.y = 2;
+            borderLeft.receiveShadow = true;
+
+
+            ground.add(borderLeft);
+
+            var borderRight = new Physijs.BoxMesh(new THREE.BoxGeometry(2, options.borderHeight, width),
+                    ground_material,
+                    0 // mass
+            );
+            borderRight.position.x = length / 2 + 1;
+            borderRight.position.y = 2;
+            borderRight.receiveShadow = true;
+
+            ground.add(borderRight);
+
+
+            var borderBottom = new Physijs.BoxMesh(
+                    new THREE.BoxGeometry(width +4, options.borderHeight, 2),
+                    ground_material,
+                    0 // mass
+            );
+
+            borderBottom.position.z = width / 2;
+            borderBottom.position.y = 2;
+            borderBottom.receiveShadow = true;
+            ground.add(borderBottom);
+
+            var borderTop = new Physijs.BoxMesh(
+                    new THREE.BoxGeometry(width+4, options.borderHeight, 2), 
+                    ground_material,
+                    0 // mass
+            );
+
+            borderTop.position.z = -width / 2;
+            borderTop.position.y = 2;
+
+            borderTop.receiveShadow = true;
+
+            ground.position.x = 0;
+            ground.position.z = 0;
+            ground.add(borderTop);
+
+            ground.receiveShadow = true;
+
+            scene.add(ground);
+        }
+
+
+        render = function () {
+            if (controls.simulate)
+            {
+              scene.simulate();
+            }
+            requestAnimationFrame(render);
+            renderer.render(scene, controls.useRobotCamera? alt_camera: camera);
+            axisHelper.visible = controls.showAxis;
+            render_stats.update();
+        };
+
+
+        window.onload = initScene;
+
+    </script>
+</head>
+
+<body>
+<div id="viewport"></div>
+</body>
+
+</html>

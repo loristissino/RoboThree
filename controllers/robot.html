@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>Robot Controller</title>
+	<meta charset="utf-8" />
+  
+  <style>
+    body { font-size: 1em }
+    button { font-size: 1.2em; font-family: courier, monospaced }
+    td { text-align: center }
+  </style>
+  <script type="text/javascript" src="jquery-2.1.4.min.js"></script>
+  
+</head>
+
+<body>
+  <table>
+    <tr>
+      <td><button id="fwl" class="commands">FWL</button></td>
+      <td><button id="fw" class="commands">FW</button></td>
+      <td><button id="fwr" class="commands">FWR</button></td>
+    </tr>
+    <tr>
+      <td><button id="l" class="commands">L</button></td>
+      <td><button id="stop" class="commands">STOP</button></td>
+      <td><button id="r" class="commands">R</button></td>
+    </tr>
+    <tr>
+      <td><button id="bwl" class="commands">BWL</button></td>
+      <td><button id="bw" class="commands">BW</button></td>
+      <td><button id="bwr" class="commands">BWR</button></td>
+    </tr>
+  </table>
+  <input id="power" type="range" min="0" max="4" step=".25" />
+  <hr>
+  <div id="info">
+  </div>
+
+<script type="text/javascript">
+/*<![CDATA[*/
+jQuery(function($) {
+		$(function() {
+      var left = 0;
+      var right = 0;
+      
+//      var url = '172.16.100.190:9080/update';
+      //var url = '127.0.0.1:9080/update';
+      
+      var power = 1;
+      var commands = { leftEngine: 0, rightEngine: 0 };
+      
+      function makePost() {
+          commands.leftEngine = power * left;
+          commands.rightEngine = power * right;
+          
+           $(".commands").attr("disabled", "disabled");
+        
+          var posting = $.post( "http://127.0.0.1:9080/update", JSON.stringify(commands), function() {
+              })
+                .done(function(data) {
+                  var response = data;
+                  $("#info").html(decodeResponse(response));
+                  $(".commands").removeAttr("disabled");
+                  console.log("received answer");
+                  console.log(response);
+                })
+                  .fail(function() {
+                    console.log("error...");
+                })
+                .always(function() {
+                  //alert( "finished" );
+              });
+        
+      }
+      
+      
+      function decodeResponse(obj)
+      {
+        var text = [];
+        $.each( obj, function( key, value ) {
+          text.push( key + ": " + value );
+        });
+        return text.join("<br />");
+      }
+      
+      
+      $('#power').on('change', function() {
+        power = $('#power').val();
+        makePost();
+        });
+      
+			$('#fwl').click(function() {
+        left = 1;
+        right = 2;
+        makePost();
+      });
+			$('#fw').click(function() {
+        left = 2;
+        right = 2;
+        makePost();
+      });
+			$('#fwr').click(function() {
+        left = 2;
+        right = 1;
+        makePost();
+      });
+			$('#l').click(function() {
+        left = -1;
+        right = 1;
+        makePost();
+      });
+			$('#stop').click(function() {
+        left = 0;
+        right = 0;
+        makePost();
+      });
+			$('#r').click(function() {
+        left = 1;
+        right = -1;
+        makePost();
+      });
+			$('#bwl').click(function() {
+        left = -1;
+        right = -2;
+        makePost();
+      });
+			$('#bw').click(function() {
+        left = -2;
+        right = -2;
+        makePost();
+      });
+			$('#bwr').click(function() {
+        left = -2;
+        right = -1;
+        makePost();
+      });
+    })
+});
+/*]]>*/
+</script>
+</body>
+
+</html>
+
+
