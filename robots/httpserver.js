@@ -1,178 +1,131 @@
 var http = require('http');
 var request = require('request');
 
-var sensors = { leftEngine: 0, rightEngine: 0, sonar: 0, orientation: 0 };
-var actuators = { leftEngine: 0, rightEngine: 0, led: 0, sonarDebug: 8888, orientationDebug: 0 };
+/**
+ * @author Loris Tissino / http://loris.tissino.it
+*/
+
+'use strict';
+
+var BasicRobot = function ( id ) {
+    this.id = id;
+    this.dist = 100;
+    this.inManoeuver = false;
+    this.LED1 = 0;
+    this.LW0 = 0; // array?
+    this.LW1 = 0;
+    this.RW0 = 0;
+    this.RW1 = 0;
+};
+
+BasicRobot.prototype.onInit = function onInit () {
+    setInterval(this.step.bind(this), 100); // check every 100ms to see if we're too close // see http://stackoverflow.com/questions/7890685/referencing-this-inside-setinterval-settimeout-within-object-prototype-methods
+    this.forward();
+}
+
+BasicRobot.prototype.update = function update ( values ) {
+    //console.log ( "Processing:" );
+    //console.log ( values );
+    if ( typeof values !== 'undefined' )
+    {
+        // input
+        this.dist = values.dist;
+    }  
+    else {
+        values = {};
+    }
+    
+    // output
+    values.lw0 = this.LW0;
+    values.lw1 = this.LW1;
+    values.rw0 = this.RW0;
+    values.rw1 = this.RW1;
+
+    return values;
+}
+
+BasicRobot.prototype.forward = function forward () {
+    this.LW0 = 0;
+    this.RW0 = 0;
+    this.LW1 = 1;
+    this.RW1 = 1;
+}
+
+BasicRobot.prototype.back = function back () {
+    console.log("=======BACKING!!!");
+    this.LW0 = 1;
+    this.RW0 = 1;
+    this.LW1 = 0;
+    this.RW1 = 0;
+}
+
+BasicRobot.prototype.turn = function turn () {
+    this.LW0 = 1;
+    this.RW0 = 0;
+    this.LW1 = 0;
+    this.RW1 = 1;
+}
+
+BasicRobot.prototype.stop = function stop () {
+    this.LW0 = 0;
+    this.RW0 = 0;
+    this.LW1 = 0;
+    this.RW1 = 0;
+}
+
+BasicRobot.prototype.backup = function backup () {
+    this.inManoeuver = true;
+    this.back();
+    var robot = this; // a reference
+    setTimeout(function() {
+        robot.turn();
+        setTimeout(function() {
+            robot.inManoeuver = false;
+            robot.forward();
+        }, 2500);
+    }, 2500);
+}
+
+BasicRobot.prototype.step = function step () {
+    // if we detect we're getting too close, turn around
+    if ( this.dist < 20 && !this.inManoeuver ) {
+        this.backup();
+    }
+}
+
+var robots = {
+    one: new BasicRobot('one')
+};
+
+for (var id in robots) {
+    robots[id].onInit();
+}
+
+console.log ( robots );
 
 var mainServer = http.createServer(function (request, response) {
-
-  if (request.url == '/update')
-  {
-     var content = '';
-     request.on('data', function (data) {
-       content += data;
-      });
-     request.on('end', function () {
-       var values = JSON.parse( content );
-
-       /*
-       console.log("MAIN - values received: ");
-       console.log(values);
-       */
-       for (var attrname in values) {
-          sensors[attrname] = values[attrname];
-          }
-       
-       /*  
-       console.log("updated sensors: ");
-       console.log(sensors);
-       */
-       
-       actuators.leftEngine = sensors.leftEngine;
-       actuators.rightEngine = sensors.rightEngine;
-       actuators.sonarDebug = sensors.sonar;
-       if (sensors.sonar < 20)
-       {
-          actuators.led = 1;
-       }
-       else
-       {
-          actuators.led = 0;
-       }
-
-       if (sensors.sonar < 10)
-       {
-         if (actuators.leftEngine > 0)
-         {
-            actuators.leftEngine = 0;
-         }
-         if (actuators.rightEngine > 0)
-         {
-            actuators.rightEngine = 0;
-         }
-       }
-       
-       actuators.orientationDebug = sensors.orientation;
-       
-       response.writeHead(200, { 'content-type': 'text/json', 'Access-Control-Allow-Origin': '*' });
-       
-       var text = JSON.stringify(actuators);
-       
-       response.write(text);
-       response.end();
-     })
-  }
-
+    if (request.url == '/update')
+    {
+        var content = '';
+        request.on('data', function (data) {
+            content += data;
+        });
+        request.on('end', function () {
+            var values = JSON.parse( content );
+            var updatedValues = {};
+            //console.log("Request:");
+            //console.log(values);
+            
+            for (var id in robots) {
+                updatedValues[id] = robots[id].update( values[id] );
+            }
+            response.writeHead(200, { 'content-type': 'text/json', 'Access-Control-Allow-Origin': '*' });
+            var text = JSON.stringify( updatedValues );
+            response.write(text);
+            response.end();
+        })
+    }
 });
 
 mainServer.listen(9080);
 
-var timer;
-
-var initialOrientation;
-var finalOrientation;
-var settings = { leftEngine: 0, rightEngine: 0 };
-
-var initialTime;
-
-function callAndCheck(command, settings, originalResponse)
-{
-  
-  console.log("command: " + command);
-  console.log("data to send - 1");
-  console.log(settings)
-  var post_data = JSON.stringify(settings);
-  console.log("data to send - 2");
-  console.log(post_data);
-  
-  request({
-      url: 'http://127.0.0.1:9080/update',
-      method: "POST",
-      json: false,   // <--Very important!!!  // FIXME This must be checked...
-      body: post_data
-  }, function (error, response, body){
-      //console.log("error");
-      //console.log(error);
-      //console.log(response);
-      var values = body;
-      //console.log("values received");
-      console.log(values);
-      v = JSON.parse(values);
-      // console.log(v.orientationDebug);
-      // var difference = Math.abs(v.orientationDebug - finalOrientation);
-      //console.log("difference: " + difference);
-      if (command == '/turnLeft')
-      {
-        if (v.orientationDebug < 0) v.orientationDebug += 360;
-        if (Math.abs(v.orientationDebug - finalOrientation) <= 30)
-        {
-            console.log("This is completed...");
-            originalResponse.end();  // rispondiamo all'altro...
-            timer = null;
-        }
-      }
-      else if (command == '/pause')
-      {
-        var t = new Date();
-        
-        if ((t.getTime() - initialTime.getTime()) >= 5000)
-        {
-            console.log("This is completed...");
-            originalResponse.end();  // rispondiamo all'altro...
-            timer = null;
-        }
-      }
-      
-  });
-
-
-}
-
-function waitForExecutionAndConfirm(command, response)
-{
-  initialOrientation = actuators.orientationDebug;
-  initialTime = new Date();
-  if (command == '/turnLeft') {
-      finalOrientation = initialOrientation + 90;
-      settings.leftEngine = -2.45;
-      settings.rightEngine = 2.45;
-  }
-  else if (command == '/pause') {
-      settings.leftEngine = 0;
-      settings.rightEngine = 0;
-  }
-  console.log("setting timer...");
-  timer = setInterval (callAndCheck, 1000, command, settings, response);
-}
-
-
-var robotServer = http.createServer(function (request, response) {
-
-  //console.log("called, url=" + request.url);
-  request.on('data', function (data) {
-      //console.log(data);
-    });
-  request.on('end', function () {
-    
-    if (request.url == '/turnLeft')
-    {
-      response.writeHead(200, { 'content-type': 'text/plain' });
-      response.write('OK, execution of ' + request.url + ' started... ');
-      waitForExecutionAndConfirm('/turnLeft', response);
-    }
-    else if (request.url == '/pause')
-    {
-      response.writeHead(200, { 'content-type': 'text/plain' });
-      response.write('OK, execution of ' + request.url + ' started... ');
-      waitForExecutionAndConfirm('/pause', response);
-    }
-    else
-    {
-      response.writeHead(404, { 'content-type': 'text/plain' });
-      response.write('Unrecognized command');
-      response.end();
-    }
-    })
-  });
-
-robotServer.listen(9001);
