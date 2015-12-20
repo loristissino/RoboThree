@@ -12,12 +12,19 @@ Basically, there is a world where robots can move. The world is represented
 and managed by a Three.js web application, with an underlying Physi.js 
 physics simulation engine.
 
-At each frame, the world makes an HTTP post request to the simulated robot,
-which is implemented as a Node.js command line application.
+Outside, there are some robots' managers, and each of them manages one or more
+robots.
+
+At each frame, the world makes an HTTP post request to each of the managers,
+the simulated robot, which is implemented as a Node.js command line application.
 
 In this request, the world sends a JSON-formatted array of data (for instance,
 the values of the sensors) and the robot sends a JSON-formatted array of
 other data (basically, the values of the actuators).
+
+## Installation
+
+Not yet, sorry.
 
 ## Credits
 
@@ -41,4 +48,7 @@ Pictures and textures:
 
 ## History
 
-Release 0.01: little more than a proof-of-concept.
+* Release 0.01 (December 2nd, 2015): little more than a proof-of-concept.
+
+* Release 0.10 (December 20th, 2015): first big refactoring, with more structured object oriented patterns.
+
