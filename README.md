@@ -46,6 +46,15 @@ Pictures and textures:
 * [LearningThreejs.com](http://learningthreejs.com/)
 * [dat.GUI Tutorial](http://workshop.chromeexperiments.com/examples/gui/#1--Basic-Usage)
 
+## Alternatives
+
+RoboThree aims to be lightweight and very simple in its implementation. If you are interested in something
+more realistic (and more complex) you could try:
+
+* [Autonomous Robot Simulator](http://sourceforge.net/projects/arsproject/)
+* [Gazebo](http://gazebosim.org/)
+* [v-rep](http://www.coppeliarobotics.com/downloads.html)
+
 ## History
 
 * Release 0.01 (December 2nd, 2015): little more than a proof-of-concept.
