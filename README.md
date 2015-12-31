@@ -61,3 +61,5 @@ more realistic (and more complex) you could try:
 
 * Release 0.10 (December 20th, 2015): first big refactoring, with more structured object oriented patterns.
 
+* Release 0.20 (Decembre 31th, 2015): some enhancements of different kinds: added sonars and leds.
+

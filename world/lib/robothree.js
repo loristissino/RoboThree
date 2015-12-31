@@ -24,7 +24,7 @@ var BasicRobot = function () {
 BasicRobot.prototype.setId = function setId ( id ) {
     this.id = id;
     this.isBuilt = false;
-    this.components = [];  // since we cannot use groups in Physijs scenes, we keep track of them here...
+    this.components = [];  // we keep track of components with constraints here, because we need to move the separetely
     this.data = {};  // the data sent and received when updating with HTTP posts
     return this;
 }
@@ -108,19 +108,15 @@ BasicRobot.prototype.createWheel = function createWheel ( options ) {
 BasicRobot.prototype.createDOFConstraint = function createDOFConstraint ( mainObject, constrainedObject, position ) {
     return new Physijs.DOFConstraint( mainObject, constrainedObject, position );
 }
-/*
-BasicRobot.prototype.createFixedConstraint = function createFixedConstraint ( mainObject, constrainedObject, position ) {
-    // used to keep two objects together, with no movement
-    var constraint = new Physijs.SliderConstraint(
-        mainObject,
-        constrainedObject,
-        position,
-        new THREE.Vector3( 0, 0, 1 ) // Axis along which the hinge lies
+
+BasicRobot.prototype.createHingeConstraint = function createHingeConstraint ( mainObject, constrainedObject, position, axis ) {
+    return new Physijs.HingeConstraint(
+        mainObject, // First object to be constrained
+        constrainedObject, // OPTIONAL second object - if omitted then physijs_mesh_1 will be constrained to the scene
+        position, // point in the scene to apply the constraint
+        axis // Axis along which the hinge lies - in this case it is the X axis
     );
-    constraint.setLimits( 0, 0, 0, 0 );
-    return constraint;
 }
-*/
 
 BasicRobot.prototype.build = function build () {
     throw "Error: this should be implemented in the actual robot class";
@@ -156,7 +152,8 @@ BasicRobot.prototype.manageCommunicationFailure = function manageCommunicationFa
 BasicRobot.prototype.move = function move ( vector, relative ) {
     // vector is a THREE.Vector3 object
     // relative is a boolean: if true, the vector is considered a change from current position, else a final destination
-    
+    console.log ('moving to: ');
+    console.log ( vector );
     var offset;
     
     if ( typeof relative === 'undefined' ) {
@@ -165,13 +162,36 @@ BasicRobot.prototype.move = function move ( vector, relative ) {
     
     offset = relative ? vector : vector.sub ( this.chassis.position );
     
+    this.chassis.position.add ( offset );
+    this.chassis.__dirtyPosition = true;
+    this.chassis.__dirtyRotation = true;
+    
     $.each ( this.components, function ( index, component ) {
        component.position.add( offset );
        component.__dirtyPosition = true;
        component.__dirtyRotation = true;
     });
+    
     return this;
 }
+
+BasicRobot.prototype.rotateOnAxis = function rotateOnAxis ( axis, angle ) {
+    // vector is a THREE.Vector3 object
+    // relative is a boolean: if true, the vector is considered a change from current position, else a final destination
+
+    this.chassis.rotateOnAxis ( axis, angle );
+    this.chassis.__dirtyPosition = true;
+    this.chassis.__dirtyRotation = true;
+/*    
+    $.each ( this.components, function ( index, component ) {
+       component.position.add( offset );
+       component.__dirtyPosition = true;
+       component.__dirtyRotation = true;
+    });
+*/
+    return this;
+}
+
 
 
 var RobotsManager = function ( values, simulator ) {
@@ -262,9 +282,9 @@ var SimulationManager = function ( defaults ) {
     this.loader = new THREE.TextureLoader();
 
     this.initRenderer = function initRenderer () {
-        this.renderer = new THREE.WebGLRenderer( {antialias: true, preserveDrawingBuffer: true} );
+        this.renderer = new THREE.WebGLRenderer( {antialias: true, preserveDrawingBuffer: true, alpha: true } );
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setClearColor(new THREE.Color(0x000000));
+        this.renderer.setClearColor( 0xFAC94E, 1);
         this.renderer.shadowMap.enabled = true;
         $('#viewport').append(this.renderer.domElement);
         return this;
@@ -284,6 +304,7 @@ var SimulationManager = function ( defaults ) {
         $.each ( this.userData.simulator.robotsManagers, function ( id, robotManager ) {
             robotManager.update();
         });
+        
     }
 
     this.initScene = function initScene ( options ) {
@@ -305,6 +326,10 @@ var SimulationManager = function ( defaults ) {
         this.mainCamera.position.copy ( values.position );
         this.mainCamera.lookAt( values.lookAt );
         this.scene.add( this.mainCamera );
+        
+        this.availableCameras = {};
+        this.availableCameras[this.mainCamera.uuid] = this.mainCamera;
+        
         this.usedCamera = this.mainCamera; // we keep a reference to the camera that is actually used for each frame
         return this;
     };
@@ -316,7 +341,7 @@ var SimulationManager = function ( defaults ) {
         this.light = new THREE.SpotLight( values.color, values.intensity );
         this.light.position.copy( values.position );
         this.light.castShadow = true;
-        this.light.shadowMapDebug = true;
+        //this.light.shadowMapDebug = true;
         this.light.shadowCameraNear = values.near;
         this.light.shadowCameraFar = values.far;
         this.scene.add( this.light );
@@ -460,6 +485,7 @@ $(function () {
     function render () {
         if ( simulationManager.gui.userData.controls.simulate )
         {
+            //console.log ( simulationManager );
             simulationManager.scene.simulate();
         }
         requestAnimationFrame ( render );

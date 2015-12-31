@@ -63,7 +63,7 @@ var guiFactory = function ( simulator ) {
             simulator.light.intensity = controls.lightIntensity;
         };
  
-        this.meshColor = "#ffae23";
+        this.meshColor = "#7CFF7D";
         
         this.addBoxMesh = function () {
             var cube = new Physijs.BoxMesh(
@@ -91,19 +91,30 @@ var guiFactory = function ( simulator ) {
           };
         */
         
-        this.useMainCamera = function() {
-            simulator.usedCamera = simulator.mainCamera;
-        }
+        this.selectedCamera = 'main';
 
-        this.useRobotCamera = function() {
-            var robot = simulator.getRobotById('one');
-            console.log ( robot );
-            simulator.usedCamera = simulator.getRobotById('one').camera;
+        var ctrls = this; // a reference
+
+        this.selectCamera = function() {
+            console.log ( 'camera: ' );
+            console.log ( ctrls.selectedCamera );
+            simulator.usedCamera = simulator.availableCameras[ctrls.selectedCamera];
+            
+            /*
+            if ( this.selectedCamera === 'main' ) {
+                simulator.usedCamera = simulator.mainCamera;
+            }
+            else {
+                var robot = simulator.getRobotById(this.cameraSelected);
+                console.log ( robot );
+                simulator.usedCamera = simulator.getRobotById('one').camera;
+            } 
+            */  
         }
-        
-        this.takeScreenshot = function() {
-          var dataUrl = renderer.domElement.toDataURL("image/png");
-          console.log (dataUrl);
+                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            this.takeScreenshot = function() {
+          //var dataUrl = renderer.domElement.toDataURL("image/png");
+          //console.log (dataUrl);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
           }
 
         this.simulate = false;
@@ -115,14 +126,42 @@ var guiFactory = function ( simulator ) {
     
     var gui = new dat.GUI();
     
+    //gui.remember ( controls );
+    
     function addRobotsToGui( simulator, gui ) {
-        console.log ( 'adding robots...' );
+        console.log ( 'adding robots to gui list...' );
+        
         $.each ( gui.userData.managersSubfolders, function ( index, manager ) {
             
             $.each ( manager.userData.robotsManager.robots, function ( index, robot ) {
                 var property = 'buildRobot: '+robot.id;
                 controls[property] = function () {
                     robot.build();
+                    
+                    if ( robot.hasCamera() ) {
+                        console.log ( 'robot has camera...' );
+                        gui.userData.cameras[robot.camera.uuid] = robot.id;
+                        console.log ( gui );
+                        for (var i in gui.__controllers) {
+                            // gui.__controllers[i].updateDisplay(); // does not update the list shown
+                            
+                            if ( gui.__controllers[i].property == 'selectedCamera' ) {
+                                
+                                var option, t, att;
+                                for ( var j in gui.userData.cameras ) {
+                                    if ( j !== 'main' ) {
+                                        option = document.createElement ( 'option' );
+                                        t = window.document.createTextNode ( gui.userData.cameras[j] );
+                                        option.appendChild ( t );
+                                        att = document.createAttribute("value");
+                                        att.value = j;
+                                        option.setAttributeNode(att);
+                                        gui.__controllers[i].__select.appendChild ( option );
+                                    }
+                                }
+                            }
+                        }
+                    }
                                 
                     if ( typeof robot.initialValues !== 'undefined' ) {
                         if ( typeof robot.initialValues.position !== 'undefined' ) {
@@ -135,10 +174,47 @@ var guiFactory = function ( simulator ) {
                 if ( robot.hasController() ) {
                     property = 'controller: ' + robot.id;
                     controls[property] = function () {
-                        window.open(robot.controllerUrl, '', 'width=200, height=400');
+                        // console.log ( 'adding: ' + robot.controllerUrl );
+                        window.open(robot.controllerUrl, robot.id, 'width=130, height=200, scrollbars=no, status=no');
                     }
                     manager.add(controls, property);
                 }
+                
+                property = 'move: ' + robot.id;
+                controls[property] = function () {
+                    robot.move ( new THREE.Vector3 ( 0, 3.5, 0 ), false );
+                }
+                manager.add(controls, property);
+
+                property = 'rotate left: ' + robot.id;
+                controls[property] = function () {
+                    robot.rotateOnAxis ( new THREE.Vector3 ( 0, 1, 0 ), 5 * Math.PI/180 );
+                }
+                manager.add(controls, property);
+
+                property = 'rotate right: ' + robot.id;
+                controls[property] = function () {
+                    robot.rotateOnAxis ( new THREE.Vector3 ( 0, 1, 0 ), -5 * Math.PI/180 );
+                }
+                manager.add(controls, property);
+
+                /*
+                var interval;
+
+                property = 'continuos rot: ' + robot.id;
+                controls[property] = function () {
+                    interval = setInterval ( function () {
+                        robot.rotateOnAxis ( new THREE.Vector3 ( 0, 1, 0 ), 3 * (-2*Math.PI/360) );
+                    }, 500 );
+                }
+                manager.add(controls, property);
+
+                property = 'stop rot: ' + robot.id;
+                controls[property] = function () {
+                    clearInterval ( interval );
+                }
+                manager.add(controls, property);
+                */
                 
             });
         });
@@ -146,17 +222,20 @@ var guiFactory = function ( simulator ) {
     
     gui.userData = {
         controls: controls,
+        cameras: {}
     };
+    
+    gui.userData.cameras['main'] = simulator.mainCamera.uuid;
     
     var camera = gui.addFolder("Camera");
     
-    camera.add(controls, 'camPositionX', -300, 300).onChange(controls.changeCamera);
-    camera.add(controls, 'camPositionY', 0, 300).onChange(controls.changeCamera);
-    camera.add(controls, 'camPositionZ', -300, 300).onChange(controls.changeCamera);
+    camera.add(controls, 'camPositionX', -400, 400).onChange(controls.changeCamera);
+    camera.add(controls, 'camPositionY', 0, 400).onChange(controls.changeCamera);
+    camera.add(controls, 'camPositionZ', -400, 400).onChange(controls.changeCamera);
     camera.add(controls, 'camFov', 1, 100).onChange(controls.changeCamera);
-    camera.add(controls, 'camLookAtX', -300, 300).onChange(controls.changeCamera);
-    camera.add(controls, 'camLookAtY', -300, 300).onChange(controls.changeCamera);
-    camera.add(controls, 'camLookAtZ', -300, 300).onChange(controls.changeCamera);
+    camera.add(controls, 'camLookAtX', -400, 400).onChange(controls.changeCamera);
+    camera.add(controls, 'camLookAtY', -400, 400).onChange(controls.changeCamera);
+    camera.add(controls, 'camLookAtZ', -400, 400).onChange(controls.changeCamera);
     /*
     camera.add(controls, 'camRotationX', -Math.PI, Math.PI).step(.05).onChange(controls.changeCamera);
     camera.add(controls, 'camRotationY', -Math.PI, Math.PI).step(.05).onChange(controls.changeCamera);
@@ -164,10 +243,10 @@ var guiFactory = function ( simulator ) {
     */
     
     var light = gui.addFolder("Light");
-    light.add(controls, 'lightPositionX', -300, 300).onChange(controls.changeLight);
-    light.add(controls, 'lightPositionY', 0, 300).onChange(controls.changeLight);
-    light.add(controls, 'lightPositionZ', -300, 300).onChange(controls.changeLight);
-    light.add(controls, 'lightIntensity', 0, 4).onChange(controls.changeLight);
+    light.add(controls, 'lightPositionX', -400, 400).onChange(controls.changeLight);
+    light.add(controls, 'lightPositionY', 0, 400).onChange(controls.changeLight);
+    light.add(controls, 'lightPositionZ', -400, 400).onChange(controls.changeLight);
+    light.add(controls, 'lightIntensity', 0, 5).onChange(controls.changeLight);
 
     var meshes = gui.addFolder("Meshes");
     
@@ -186,9 +265,7 @@ var guiFactory = function ( simulator ) {
         gui.userData.managersSubfolders.push ( manager );
     });
     
-//    gui.add(controls, 'openController');
-    gui.add(controls, 'useMainCamera');
-    gui.add(controls, 'useRobotCamera');
+    gui.add(controls, 'selectedCamera', gui.userData.cameras).onChange (controls.selectCamera);
     gui.add(controls, 'takeScreenshot');
     
     var debug = gui.addFolder("Debug");
