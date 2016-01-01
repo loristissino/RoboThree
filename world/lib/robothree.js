@@ -192,7 +192,16 @@ BasicRobot.prototype.rotateOnAxis = function rotateOnAxis ( axis, angle ) {
     return this;
 }
 
-
+BasicRobot.prototype.horizontalAngleFromVector3 = function horizontalAngleFromVector3 ( angle ) {
+    if ( angle.x == 0 ) {
+        return angle.z > 0 ? Math.PI : -Math.PI;
+        }
+    var value = Math.PI/2 - Math.atan ( angle.z / angle.x );
+    if ( angle.x < 0 ) {
+        value += Math.PI;
+    }
+    return value;
+}
 
 var RobotsManager = function ( values, simulator ) {
     console.log(values);
