@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>IR</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            overflow: hidden;
+            margin: 0;
+            font-family: arial;
+            font-size: 0.8em;
+            }
+        button {
+            position: absolute;
+            font-family: courier, monospaced;
+            color: #fff;
+            background-color: #7F7F7F;
+            border: none;
+            border-radius: 5px;
+            box-shadow: 0 4px #4D4D4D;
+            }
+        button:hover {
+            cursor:pointer;
+            }
+        button:active {
+            background-color: #4D4D4D;
+            box-shadow: 0 2px #4D4D4D;
+            transform: translateY(2px);
+            }
+        button.triggered {
+            background-color: red;
+            box-shadow: 0 2px #4D4D4D;
+            transform: translateY(2px);
+            }
+        #info {
+            position: absolute;
+            background-color: #BFBFBF;
+            display: none;
+            }
+        
+    </style>
+    <script type="text/javascript" src="jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="parseUri.js"></script>
+  
+</head>
+
+<body>
+    <!--
+    <div id="extra">
+        <div id="accelerometer">
+        <input id="accel" type="checkbox">accelerometer
+        </div>
+    </div>
+    -->
+    <div id="frame">
+        <div id="buttons">
+        </div>
+        <div id="info">
+        </div>
+    </div>
+
+<script type="text/javascript">
+/*<![CDATA[*/
+$(function() {
+    
+    var uri = parseUri ( document.location );
+    
+    var id =  uri.queryKey.id;
+
+    $(document).prop('title', 'IR: ' + id);
+    $("body").css('background-color', '#' + (uri.queryKey.color || '789696'));
+
+    var server = uri.queryKey.server || 'http://127.0.0.1:9080/update';
+    var codes = uri.queryKey.codes;
+    
+    var accelfb = uri.queryKey.accelfb || 'y';
+    var accellr = uri.queryKey.accellr || 'x';
+    var fbv = uri.queryKey.fbv || 3;
+    var lrv = uri.queryKey.lrv || 3;
+
+    var url = "codes/"+codes+".json";
+    
+    var values = { ir: -1 };
+    
+    var dataToSend = {};
+    dataToSend[id] = values;
+    
+    var power = 1;
+    var lastSent = 0;
+    
+    var preparedButton = '';
+    var motionEvent = false;
+    /*
+    if ( window.DeviceMotionEvent ) {
+        window.addEventListener('devicemotion', handleMotion, false);
+        
+        var dm = setInterval ( function () {
+            if (preparedButton === 'none') {
+                $('#left').trigger('touchend');
+                $('.commands').removeClass('triggered');
+            }
+            else {
+                $(preparedButton)
+                    .addClass('triggered')
+                    .trigger('touchstart');
+            }
+        }, 50);
+        setTimeout ( function () {
+            if ( !motionEvent ) {
+                window.removeEventListener('devicemotion', handleMotion, false);
+                $('#accelerometer').hide();
+                clearInterval( dm );
+                }
+            },
+            10
+        );
+    }
+    else {
+        $('#accelerometer').hide();
+    }
+    */
+    
+    $.getJSON( url, function( data ) {
+        console.log ( "collecting data...");
+        $("#buttons").attr('data-keptpressed', data.keptpressed);
+        
+        $.each( data.buttons, function( key, button ) {
+            console.log ( "adding: " + key );
+            console.log ( button );
+            var b = $('<button>')
+                .attr("id", key)
+                .attr("data-value", button.value)
+                .addClass('commands')
+                .css( button.css )
+                .text(button.content);
+            $('#buttons').append ( b );
+        });
+
+        $('.commands').on('mousedown touchstart', function( e ) {
+            values.ir = $(e.target).attr('data-value');
+        });
+
+        $('.commands').on('mouseup touchend', function() {
+            values.ir = 0;
+        });
+        
+        $('.commands').mouseleave(function() {
+            values.ir = 0;
+        });
+        
+        console.log ("done");
+    });
+    
+    /*
+    function handleMotion ( event ) {
+        var a = event.accelerationIncludingGravity;
+        motionEvent |= (a.x != null);
+        if ( a[accelfb] < -fbv && a[accellr] > -lrv && a[accellr] < lrv ) {
+            preparedButton = '#up';
+        }
+        else if ( a[accelfb] > fbv && a[accellr] > -lrv && a[accellr] < lrv ) {
+            preparedButton = '#down';
+        }
+        else if ( a[accelfb] > -fbv  && a[accelfb] < fbv && a[accellr] < -lrv ) {
+            preparedButton = '#right';
+        }
+        else if ( a[accelfb] > -fbv && a[accelfb] < fbv && a[accellr] > lrv ) {
+            preparedButton = '#left';
+        }
+        else {
+            preparedButton = 'none';
+        }
+    }
+    */
+  
+    function makePost() {
+        
+        var posting = $.post( server, JSON.stringify( dataToSend ), function() {})
+            .done(function(data) {
+                var response = data;
+                $("#info").html(decodeResponse(response));
+                $(".commands").removeAttr("disabled");
+                console.log("received answer");
+                console.log(response);
+            })
+            .fail(function() {
+                console.log("error...");
+            })
+            .always(function() {
+                //alert( "finished" );
+          });
+    }
+  
+    var interval = setInterval ( function () {
+        if ( values.ir !== -1 ) {
+            if ( values.ir !== lastSent ) {
+                makePost();
+                lastSent = values.ir;
+                if ( values.ir === 0 ) {
+                    values.ir = -1;
+                }
+            }
+            else {
+                values.ir = $('#buttons').attr('data-keptpressed');
+            }
+        }
+    }, 50 );
+
+
+    function decodeResponse ( obj )  {
+        var text = [];
+            $.each( obj.one, function( key, value ) {
+                text.push( key + ": " + value );
+                console.log  ( value );
+            });
+        return text.join("<br />");
+    }
+
+    function fixButtons () {
+        $( "#frame" ).css("width", window.innerWidth + "px");
+    };
+    fixButtons();
+  
+    $( window ).resize ( fixButtons );
+    
+});
+/*]]>*/
+</script>
+</body>
+
+</html>
