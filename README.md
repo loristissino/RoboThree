@@ -25,16 +25,28 @@ the required behaviours.
 
 ### Files
 
-
-
-
-
-
 ## Installation
 
+You need a working version of *node* and *npm*.
 
-sudo npm install request -g
+There are three main directories:
 
+* examples
+* servers
+* user-agents
+
+The `servers` directory contains the code of the robots' managers and the code for the behaviors of robots.
+
+The `user-agents` directory contains the code used with a browser (the simulation environment, the simulated infrared remote controls, etc.).
+
+This application is meant to be a playground. In order to let you play with the code and run your own experiments, copy the examples in the main directories,
+following the directory structure.
+
+To run the servers, you will need the `request` module, that you can obtain by typing
+
+    npm install request -g
+
+(you might need to prepend this command with `sudo`).
 
 ## Credits
 
