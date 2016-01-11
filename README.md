@@ -15,16 +15,26 @@ physics simulation engine.
 Outside, there are some robots' managers, and each of them manages one or more
 robots.
 
-At each frame, the world makes an HTTP post request to each of the managers,
-the simulated robot, which is implemented as a Node.js command line application.
+At each frame, the world makes an HTTP post request to each of the managers, 
+which is implemented as a Node.js command line application.
 
-In this request, the world sends a JSON-formatted array of data (for instance,
-the values of the sensors) and the robot sends a JSON-formatted array of
-other data (basically, the values of the actuators).
+In this request, the world sends a JSON-formatted array of data containing
+information needed by the managed robots, and the manager sends a 
+JSON-formatted array of data containing information needed to implement
+the required behaviours.
+
+### Files
+
+
+
+
+
 
 ## Installation
 
-Not yet, sorry.
+
+sudo npm install request -g
+
 
 ## Credits
 
@@ -64,4 +74,7 @@ more realistic (and more complex) you could try:
 * Release 0.20 (December 31th, 2015): some enhancements of different kinds: added sonars and leds.
 
 * Release 0.21 (January 1st, 2016): bug fix (sonars' vertical variants).
+
+* Release 0.30 (January 11th, 2016): second big refactoring.
+
 
