@@ -35,10 +35,15 @@ There are two main directories:
 The application is meant to be a playground. This is why there is a separate directory, `examples`, containing configuration files, robots' sample behaviors and representations, etc. The `examples` directory contains two subdirectories, `servers` and `user-agents`, having the same structure of the main ones.
 
 In order to let you play with the code and run your own experiments without risking of having your code
-overwritten with git updates, copy the examples in the main directories, following the directory structure. You can get the job easily done with:
+overwritten with git updates, copy the examples in the main directories, following the directory structure.
+The simulated infrared remote controls need their own jQuery script and you should copy it from the directory `user-agents/world/libs/vendor/`.
+
+You can get the whole job easily done with:
 
     cd examples
     for file in $(find . -type f); do cp -v  "$file" "../$file"; done
+    cd ../user-agents
+    cp -v world/libs/vendor/jquery-2.1.4.min.js remote-controls/
 
 You should get something like this:
 

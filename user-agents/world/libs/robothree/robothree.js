@@ -1,31 +1,21 @@
 /**
  * @author Loris Tissino / http://loris.tissino.it
+ * @package RoboThree
+ * @release 0.40
+ * @license The MIT License (MIT)
 */
 
 'use strict';
 
-/*
-var BasicRobot = function ( values ) {
-    this.id = values.id;
-    this.name = values.name;
-    this.owner = values.owner;
-    this.class = values.class;
-    this.modelUrl = values.modelUrl;
-    this.data = {
-        dist: 300
-    };   
-};
-*/
-
-var BasicRobot = function () {
-
-}
+var BasicRobot = function () {}
 
 BasicRobot.prototype.setId = function setId ( id ) {
     this.id = id;
     this.isBuilt = false;
     this.components = [];  // we keep track of components with constraints here, because we need to move the separetely
     this.data = {};  // the data sent and received when updating with HTTP posts
+    this.dataPropertiesIn  = [];
+    this.registeredProcessFunctions = [];
     return this;
 }
 
@@ -90,7 +80,7 @@ BasicRobot.prototype.createWheel = function createWheel ( options ) {
   
     var wheel_material = this.getLambertPjsMaterial( { color: values.color, transparent: values.transparent, friction: values.friction, restitution: values.restitution } );
 
-    var wheel_geometry = new THREE.CylinderGeometry( values.radius, values.radius, values.thickness, 32 /* number of "sides" */ );
+    var wheel_geometry = new THREE.CylinderGeometry( values.radius, values.radius, values.thickness, 24 /* number of "sides" */ );
     
     var wheel = new Physijs.CylinderMesh(
         wheel_geometry,
@@ -103,6 +93,12 @@ BasicRobot.prototype.createWheel = function createWheel ( options ) {
     wheel.receiveShadow = true;
     wheel.position.copy( values.position );
     return wheel;
+}
+
+BasicRobot.prototype.updateWheelSpeed = function updateWheelSpeed ( wheel, speed ) {
+    if ( typeof speed !== 'undefined' ) {
+        this[wheel + 'WheelConstraint'].configureAngularMotor(2, 0.1, 0, 5*speed, 15000);
+    }
 }
 
 BasicRobot.prototype.createDOFConstraint = function createDOFConstraint ( mainObject, constrainedObject, position ) {
@@ -124,29 +120,10 @@ BasicRobot.prototype.build = function build () {
 
 BasicRobot.prototype.update = function update ( data ) {
     throw "Error: this should be implemented in the actual robot class";
-    /*
-    if ( typeof data !== 'undefined' )
-    {
-        console.log( "processing upcoming data:" );
-        console.log(data);
-        this.data.lw0 = data.lw0;
-        this.data.lw1 = data.lw1;
-        this.data.rw0 = data.rw0;
-        this.data.rw1 = data.rw1;
-    }
-    this.data.dist -= 1;
-    return this.data;
-    */
 }
 
 BasicRobot.prototype.manageCommunicationFailure = function manageCommunicationFailure () {
     throw "Error: this should be implemented in the actual robot class";
-    //this.data.sensors.led = 0;
-    //this.data.actuators.wheel = 0;
-    //console.log(this);
-    /*
-    return this.data;
-    */
 }
 
 BasicRobot.prototype.move = function move ( vector, relative ) {
@@ -182,25 +159,44 @@ BasicRobot.prototype.rotateOnAxis = function rotateOnAxis ( axis, angle ) {
     this.chassis.rotateOnAxis ( axis, angle );
     this.chassis.__dirtyPosition = true;
     this.chassis.__dirtyRotation = true;
-/*    
-    $.each ( this.components, function ( index, component ) {
-       component.position.add( offset );
-       component.__dirtyPosition = true;
-       component.__dirtyRotation = true;
-    });
-*/
     return this;
 }
 
-BasicRobot.prototype.horizontalAngleFromVector3 = function horizontalAngleFromVector3 ( angle ) {
-    if ( angle.x == 0 ) {
-        return angle.z > 0 ? Math.PI : -Math.PI;
-        }
-    var value = Math.PI/2 - Math.atan ( angle.z / angle.x );
-    if ( angle.x < 0 ) {
-        value += Math.PI;
+BasicRobot.prototype.getAngle = function getAngle ( pos1, pos2, axes ) {
+    return Math.PI + Math.atan2 ( pos1[axes[0]] - pos2[axes[0]], pos1[axes[1]] - pos2[axes[1]] );
+}
+
+BasicRobot.prototype.getAbsolutePositionForObject = function getAbsolutePositionForObject( obj, forceUpdate ) {
+    if ( typeof obj.userData.absolutePosition === 'undefined' ) {
+        obj.userData.absolutePosition = new THREE.Vector3();
     }
-    return value;
+    else {
+        if ( forceUpdate === false ) {
+            return obj.userData.absolutePosition;
+        }
+    }
+    obj.userData.absolutePosition.setFromMatrixPosition( obj.matrixWorld );
+    return obj.userData.absolutePosition;
+}
+
+BasicRobot.prototype.getBottomImagePixelCoordinatesForObject = function getBottomImagePixelCoordinatesForObject( obj, forceUpdate ) {
+    var coords = this.getAbsolutePositionForObject( obj, forceUpdate );
+    return new THREE.Vector2 (
+        Math.round( THREE.Math.mapLinear (
+            coords.x,
+            - this.robotsManager.simulator.bottom.width / 2,
+            this.robotsManager.simulator.bottom.width / 2,
+            0,
+            this.robotsManager.simulator.bottom.canvas.width
+        )),
+        Math.round( THREE.Math.mapLinear (
+            coords.z,
+            - this.robotsManager.simulator.bottom.height / 2,
+            this.robotsManager.simulator.bottom.height / 2,
+            0,
+            this.robotsManager.simulator.bottom.canvas.height
+        ))
+    );
 }
 
 var RobotsManager = function ( values, simulator ) {
@@ -218,7 +214,7 @@ RobotsManager.prototype.addRobot = function ( robot ) {
     
     var rm = this; // a reference
     
-    var url = 'robots/' + robot.class + '.js';
+    var url = 'representations/' + robot.class + '.js';
 
     console.log ( 'Loading script file...' );
     $.getScript( url )   // in a future version we might call the robotsManager via http for this
@@ -299,8 +295,25 @@ var SimulationManager = function ( defaults ) {
         return this;
     };
 
+    this.initAltRenderer = function initAltRenderer () {
+        this.altRenderer = new THREE.WebGLRenderer( {antialias: false, preserveDrawingBuffer: true, alpha: false } );
+        this.altRenderer.setSize(160, 120);
+        this.altRenderer.setClearColor( 0xFAC94E, 1);
+        this.altRenderer.shadowMap.enabled = true;
+        this.altRenderer.domElement.style.position = 'absolute';
+        this.altRenderer.domElement.style.top = '60px';
+        this.altRenderer.domElement.style.left = '1px';
+        this.altRenderer.domElement.style.zIndex = 100;
+        this.altRenderer.domElement.style['border-style'] = 'double';
+        this.altRenderer.domElement.style['border-color'] = '#000000';
+        this.altRenderer.domElement.style.visibility = 'hidden';
+        $('#viewport').append(this.altRenderer.domElement);
+        return this;
+    };
+
     this.initRenderStats = function initRenderStats () {
         this.renderStats = new Stats();
+        this.renderStats.setMode( this.defaults.stats.mode ); 
         this.renderStats.domElement.style.position = 'absolute';
         this.renderStats.domElement.style.top = '1px';
         this.renderStats.domElement.style.left = '1px';
@@ -313,7 +326,6 @@ var SimulationManager = function ( defaults ) {
         $.each ( this.userData.simulator.robotsManagers, function ( id, robotManager ) {
             robotManager.update();
         });
-        
     }
 
     this.initScene = function initScene ( options ) {
@@ -334,6 +346,7 @@ var SimulationManager = function ( defaults ) {
         this.mainCamera = new THREE.PerspectiveCamera ( values.fov, values.aspect, values.near, values.far );
         this.mainCamera.position.copy ( values.position );
         this.mainCamera.lookAt( values.lookAt );
+        this.mainCamera.name = "main";
         this.scene.add( this.mainCamera );
         
         this.availableCameras = {};
@@ -389,55 +402,82 @@ var SimulationManager = function ( defaults ) {
         var scene = this.scene; // a reference
         var simulator = this; // a reference
         
+        this.bottom = {};
+        
         // Material
-            this.loader.load(
-                values.texture,
-                // Function when resource is loaded
-                function ( texture ) {
+        this.loader.load(
+            values.texture,
+            // Function called when the resource is loaded
+            function ( texture ) {
 
-                    var mesh, geometry;
-					var texturedMaterial = new THREE.MeshBasicMaterial( { map: texture, overdraw: 0.5 } );
-                    var texturedPjsMaterial = createPhysijsMaterial( texturedMaterial );
-                    
-                    var coloredMaterial = new THREE.MeshLambertMaterial ( {
-                        color: 0xffffff,
-                        opacity: 1,
-                        transparent: false,
-                    });
-                    var coloredPjsMaterial = createPhysijsMaterial( coloredMaterial );
-                    
-                    $.each( values.pieces, function ( name, piece ) {
-                        geometry = new THREE.BoxGeometry( piece.sizeX, piece.sizeY, piece.sizeZ );
-                        if ( typeof piece.color === 'undefined' ) {
-                            mesh = new Physijs.BoxMesh( geometry, texturedPjsMaterial, 0 );
+                simulator.bottom.canvasElement = $('<canvas />');
+                simulator.bottom.canvasElement.attr('id', 'mycanvas');
+                simulator.bottom.canvas = simulator.bottom.canvasElement[0];
+                simulator.bottom.canvas.width = texture.image.width;
+                simulator.bottom.canvas.height = texture.image.height;
+                simulator.bottom.canvas.getContext( '2d' ).drawImage( texture.image, 0, 0, texture.image.width, texture.image.height );
+    
+                /*
+                $('#viewport').append ( simulator.bottom.canvasElement );
+                $('#mycanvas').css('position', 'absolute');
+                $('#mycanvas').css('top', '200px');
+                $('#mycanvas').css('left', '1px');
+                $('#mycanvas').css('zIndex', 98);
+                */
+                
+                var mesh, geometry;
+                
+                simulator.bottom.canvasMap = new THREE.Texture( simulator.bottom.canvas );
+                simulator.bottom.canvasMap.needsUpdate = true;
+                
+                var texturedMaterial = new THREE.MeshBasicMaterial( { map: simulator.bottom.canvasMap, overdraw: 0.5 } );
+
+                var texturedPjsMaterial = createPhysijsMaterial( texturedMaterial );
+                
+                var coloredMaterial = new THREE.MeshLambertMaterial ( {
+                    color: 0xffffff,
+                    opacity: 1,
+                    transparent: false,
+                });
+                var coloredPjsMaterial = createPhysijsMaterial( coloredMaterial );
+                
+                $.each( values.pieces, function ( name, piece ) {
+                    geometry = new THREE.BoxGeometry( piece.sizeX, piece.sizeY, piece.sizeZ );
+                    if ( typeof piece.color === 'undefined' ) {
+                        mesh = new Physijs.BoxMesh( geometry, texturedPjsMaterial, 0 );
+                    }
+                    else {
+                        mesh = new Physijs.BoxMesh( geometry, coloredPjsMaterial, 0 );
+                        mesh.material = mesh.material.clone();
+                        mesh.material.color.setHex( piece.color );
+                        if ( typeof piece.opacity !== 'undefined' ) {
+                            mesh.material.opacity = piece.opacity;
                         }
-                        else {
-                            mesh = new Physijs.BoxMesh( geometry, coloredPjsMaterial, 0 );
-                            mesh.material = mesh.material.clone();
-                            mesh.material.color.setHex( piece.color );
-                            if ( typeof piece.opacity !== 'undefined' ) {
-                                mesh.material.opacity = piece.opacity;
-                            }
-                        };
-                        mesh.position.copy( piece.position );
-                        if ( typeof piece.rotation !== 'undefined' ) {
-                            mesh.rotation.setFromVector3( piece.rotation );
-                        }
-                        mesh.name = name;
-                        mesh.receiveShadow = true;
-                        mesh.castShadow = true;
-                        scene.add( mesh );
-                    });
-                },
-                // Function called when download progresses
-                function ( xhr ) {
-                    console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-                },
-                // Function called when download errors
-                function ( xhr ) {
-                    console.log( 'An error happened' );
-                }
-            );
+                    };
+                    if ( name == 'bottom' ) {
+                        simulator.bottom.width = piece.sizeX;
+                        simulator.bottom.height = piece.sizeZ;
+                        simulator.bottom.mesh = mesh;
+                    }
+                    mesh.position.copy( piece.position );
+                    if ( typeof piece.rotation !== 'undefined' ) {
+                        mesh.rotation.setFromVector3( piece.rotation );
+                    }
+                    mesh.name = name;
+                    mesh.receiveShadow = true;
+                    mesh.castShadow = true;
+                    scene.add( mesh );
+                });
+            },
+            // Function called when download progresses
+            function ( xhr ) {
+                console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+            },
+            // Function called when download errors
+            function ( xhr ) {
+                console.log( 'An error happened' );
+            }
+        );
         return this;
     }
     
@@ -459,6 +499,7 @@ var SimulationManager = function ( defaults ) {
     this.initSimulation = function() {
         this
             .initRenderer()
+            .initAltRenderer()
             .initRenderStats()
             .initScene()
             .addAxisHelper()
@@ -494,16 +535,22 @@ $(function () {
     function render () {
         if ( simulationManager.gui.userData.controls.simulate )
         {
-            //console.log ( simulationManager );
             simulationManager.scene.simulate();
         }
         requestAnimationFrame ( render );
         simulationManager.renderer.render ( simulationManager.scene, simulationManager.usedCamera );
+        if ( simulationManager.gui.userData.controls.enableAltCamera && simulationManager.usedCamera.name !== 'main' ) {
+            simulationManager.altRenderer.render ( simulationManager.scene, simulationManager.mainCamera );
+            simulationManager.altRenderer.domElement.style.visibility = 'visible';
+        }
+        else {
+            simulationManager.altRenderer.domElement.style.visibility = 'hidden';
+        }
         simulationManager.axisHelper.visible = simulationManager.gui.userData.controls.showAxis;
         simulationManager.renderStats.update();
     };
 
-    Physijs.scripts.worker = 'libs/physijs_worker.js';
+    Physijs.scripts.worker = 'libs/vendor/physijs_worker.js';
     Physijs.scripts.ammo = 'ammo.js';
 
     var simulationManager = new SimulationManager( simulationDefaults );

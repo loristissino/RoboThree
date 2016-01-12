@@ -1,5 +1,11 @@
-var extend = require('extend');
+/**
+ * @author Loris Tissino / http://loris.tissino.it
+ * @package RoboThree
+ * @release 0.40
+ * @license The MIT License (MIT)
+*/
 
+var extend = require('extend');
 
 var ThreeWheelDistanceSensingRobotVirtualizer = function ( ) {
 };

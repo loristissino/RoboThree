@@ -1,10 +1,10 @@
 /**
  * @author Loris Tissino / http://loris.tissino.it
  * @package RoboThree
- * @license MIT
+ * @release 0.40
+ * @license The MIT License (MIT)
  * @see http://www.espruino.com/Reference
 */
-
 var hcsr04 = require("HC-SR04");
 
 var Sonar = function ( triggerPin, echoPin, frequency ) {
