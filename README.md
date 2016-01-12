@@ -42,8 +42,9 @@ You can get the whole job easily done with:
 
     cd examples
     for file in $(find . -type f); do cp -v  "$file" "../$file"; done
-    cd ../user-agents
-    cp -v world/libs/vendor/jquery-2.1.4.min.js remote-controls/
+    cd ..
+    cp -v user-agents/world/libs/vendor/jquery-2.1.4.min.js user-agents/remote-controls/
+    
 
 You should get something like this:
 
@@ -58,18 +59,20 @@ You should get something like this:
         │   │   └── EspruinoSimulator.js
         │   └── simplemanager.js
         └── virtualizers
+            ├── node_modules
             └── ThreeWheelDistanceSensingRobotVirtualizer.js
     user-agents/
     ├── remote-controls
     │   ├── codes
     │   │   └── nexPRO.json
     │   ├── infrared.html
+    │   ├── jquery-2.1.4.min.js
     │   └── parseUri.js
     └── world
         ├── assets
         │   └── textures
         │       ├── general
-        │       │   └── floor_stones.jpg
+        │       │   └── floor-wood.jpg
         │       └── robot
         │           └── wheel.png
         ├── config
@@ -94,12 +97,6 @@ You should get something like this:
 
 The file `world/config/defaults.js` is the place where you can tweak the main configuration of the simulation environment. Edit it at will.
 
-### Opening the simulation
-
-The files of the directory `user-agents` must be served by a webserver. If you have one, configure it so that it offers the files. Otherwise, you can use a light webserver like [https://www.npmjs.com/package/http-server](node http-server).
-
-Open your browser and point it to the `world.html` resource (probably something like [http://127.0.0.1:8080/world.html], but your configuration might be different).
-
 ### Running the robot's managers
 
 You need a working version of *node* and *npm*.
@@ -114,6 +111,24 @@ Go to the `servers/node/managers` and run the following command:
 
     node simplemanager.js
 
+You should get an output like:
+
+    Activated robot: «green»
+    Activated robot: «red»
+    Listening on port 9080
+
+You can use a different port, just adding the number as first parameter:
+
+    node simplemanager.js 10080
+
+### Opening the simulation
+
+The files of the directory `user-agents` must be served by a webserver. If you have one, configure it so that it offers the files. Otherwise, you can use a light webserver like [https://www.npmjs.com/package/http-server](node http-server).
+
+Open your browser and point it to the `world.html` resource (probably something like [http://127.0.0.1:8080/world/world.html], but your configuration might be different).
+
+You should be able to add meshes and robots, to open the simulated infrared remote controls, etc. Just remember that you should activate the simulation to see it action.
+
 ## Credits
 
 Libraries:
@@ -122,10 +137,10 @@ Libraries:
 * [Physijs](http://chandlerprall.github.io/Physijs/)
 * [Node.js](https://nodejs.org/en/)
 * [dat.GUI](https://code.google.com/p/dat-gui/)
-
-Pictures and textures:
-
-* [Texturex](http://www.texturex.com/)
+* [stats.js](http://github.com/mrdoob/stats.js)
+* [ThreeBSP](https://github.com/sshirokov/ThreeBSP)
+* [ammo.js](https://github.com/kripken/ammo.js/)
+* [parseUri](http://blog.stevenlevithan.com/archives/parseuri)
 
 ## Reference books and web sites
 
@@ -156,3 +171,5 @@ more realistic (and more complex) you could try:
 * Release 0.30 (January 11th, 2016): second big refactoring.
 
 * Release 0.31 (January 12th, 2016): added some documentation.
+
+* Release 0.40 (January 12th, 2016): fixed some bugs in documentation, renamed some files, added comments in the code.

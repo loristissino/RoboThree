@@ -20,6 +20,7 @@ extend ( global, require('EspruinoSimulator') );
 
 'use strict';
 
+var port = process.argv[2] || 9080;
 
 var robots = {
     green: new ThreeWheelDistanceSensingRobotBehavior('green'),
@@ -30,9 +31,10 @@ var robots = {
 
 for (var id in robots) {
     robots[id].createPins().setup().enableInfraredReader().setSpeed(0.8).addVirtualPen();
-//    robots[id].sonars.left.enable();
-//    robots[id].sonars.front.enable();
-//    robots[id].sonars.right.enable();
+    robots[id].sonars.left.enable();
+    robots[id].sonars.front.enable();
+    robots[id].sonars.right.enable();
+    console.log ( "Activated robot: «" + id + "»" );
 }
 
 var mainServer = http.createServer(function (request, response) {
@@ -57,5 +59,8 @@ var mainServer = http.createServer(function (request, response) {
     }
 });
 
-mainServer.listen(9080);
+mainServer.listen( port );
+
+console.log ( "Listening on port " + port );
+
 

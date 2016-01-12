@@ -32,14 +32,12 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.createPins = function create
 }
 
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.enableInfraredReader = function enableInfraredReader () {
-    console.log ( 'enabled from simulated...');
     this.infraredReader.code = -1;
     this.registeredCallBacks.infraredReader = this.handleInfraredReaderCode.bind(this);
     return this;
 }
 
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.disableInfraredReader = function disableInfraredReader () {
-    console.log ( 'disabled from simulated...');
     delete this.registeredCallBacks.infraredReader;
     return this;
 }

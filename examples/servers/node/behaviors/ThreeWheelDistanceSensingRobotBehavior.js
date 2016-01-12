@@ -145,7 +145,6 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.setup = function ( options ) {
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.enableInfraredReader = function () {
-    console.log ( 'enabling infraredReader...');
     this.infraredReader.watchOn = setWatch(
         this.handleInfraredReaderOn.bind(this),
         this.infraredReader.pin,
@@ -160,7 +159,6 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.enableInfraredReader = function
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.disableInfraredReader = function () {
-    console.log ( 'disabled from original...');
     clearWatch ( this.infraredReader.watchOn );
     clearWatch ( this.infraredReader.watchOff );
     return this;
@@ -198,58 +196,48 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.handleInfraredReaderCode = func
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.moveForward = function () {
-    console.log ( 'moving forward');
     this.leftWheel.forward();
     this.rightWheel.forward();
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.moveBackward = function () {
-    console.log ( 'moving backward' );
     this.leftWheel.backward();
     this.rightWheel.backward();
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.turnLeft = function () {
-    console.log ( 'turning left' );
     this.leftWheel.backward();
     this.rightWheel.forward();
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.turnRight = function () {
-    console.log ( 'turning right' );
     this.leftWheel.forward();
     this.rightWheel.backward();
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.leftForward = function () {
-    console.log ( 'only left forward ' );
     this.leftWheel.forward();
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.leftBackward = function () {
-    console.log ( 'only left backward ' );
     this.leftWheel.backward();
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.rightForward = function () {
-    console.log ( 'only right forward ' );
     this.rightWheel.forward();
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.rightBackward = function () {
-    console.log ( 'only right backward ' );
     this.rightWheel.backward();
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.stop = function stop () {
-    console.log ( 'stopping' );
     this.leftWheel.stop();
     this.rightWheel.stop();
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.setSpeed = function ( speed ) {
     this.speed = E.clip ( speed, 0.0, 1.0 );
-    console.log ( 'setting speed to: ' + this.speed );
     this.leftWheel.setSpeed(this.speed);
     this.rightWheel.setSpeed(this.speed);
     return this;
@@ -266,13 +254,11 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.increaseSpeed = function ( ) {
 ThreeWheelDistanceSensingRobotBehavior.prototype.toggleLedBlinking = function ( led ) {
     var robot = this;
     if ( typeof this.leds[led].interval === 'undefined' ) {
-        console.log ( 'starting blinking led ' + led );
         this.leds[led].interval = setInterval ( function() {
             robot.leds[led].toggle();
         }, this.leds[led].blinkingTime );
     }
     else {
-        console.log ( 'stopping blinking led ' + led );
         robot.leds[led].switchOff();
         clearInterval ( this.leds[led].interval );
         this.leds[led].interval = undefined;
