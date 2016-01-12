@@ -1,5 +1,5 @@
-//var host = '127.0.0.1:9080';
-var host = '192.168.1.12:9080';
+var host = '127.0.0.1:9080';
+//var host = '192.168.1.12:9080';
 
 var simulationDefaults = {
     stats: {

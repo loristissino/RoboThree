@@ -95,7 +95,7 @@ You should get something like this:
         │   └── ThreeWheelDistanceSensingRobotRepresentation.js
         └── world.html
 
-The file `world/config/defaults.js` is the place where you can tweak the main configuration of the simulation environment. Edit it at will.
+The file `world/config/defaults.js` is the place where you can tweak the main configuration of the simulation environment. Edit it at will, but pay attention to IP addresses and port numbers in order to let them match your servers.
 
 ### Running the robot's managers
 
@@ -123,9 +123,20 @@ You can use a different port, just adding the number as first parameter:
 
 ### Opening the simulation
 
-The files of the directory `user-agents` must be served by a webserver. If you have one, configure it so that it offers the files. Otherwise, you can use a light webserver like [https://www.npmjs.com/package/http-server](node http-server).
+The files of the directory `user-agents` must be served by a webserver. If you have one, configure it so that it offers the files. Otherwise, you can use a light webserver like [https://www.npmjs.com/package/http-server](node http-server). For instance, run
 
-Open your browser and point it to the `world.html` resource (probably something like [http://127.0.0.1:8080/world/world.html], but your configuration might be different).
+    cd user-agents
+    http-server
+
+On my computer, I get
+
+    Starting up http-server, serving ./
+    Available on:
+      http:127.0.0.1:8081
+      http:192.168.1.12:8081
+    Hit CTRL-C to stop the server
+
+Open your browser and point it to the `/world/world.html` resource.
 
 You should be able to add meshes and robots, to open the simulated infrared remote controls, etc. Just remember that you should activate the simulation to see it action.
 
