@@ -23,30 +23,91 @@ information needed by the managed robots, and the manager sends a
 JSON-formatted array of data containing information needed to implement
 the required behaviours.
 
-### Files
-
 ## Installation
 
+### Files
+
+There are two main directories:
+
+* `servers` (containing the code of the robots' managers and the code for the behaviors of robots);
+* `user-agents` (containing the code meant to be used with a browser, like the simulation environment, the simulated infrared remote controls, etc.).
+
+The application is meant to be a playground. This is why there is a separate directory, `examples`, containing configuration files, robots' sample behaviors and representations, etc. The `examples` directory contains two subdirectories, `servers` and `user-agents`, having the same structure of the main ones.
+
+In order to let you play with the code and run your own experiments without risking of having your code
+overwritten with git updates, copy the examples in the main directories, following the directory structure. You can get the job easily done with:
+
+    cd examples
+    for file in $(find . -type f); do cp -v  "$file" "../$file"; done
+
+You should get something like this:
+
+    servers/
+    └── node
+        ├── behaviors
+        │   ├── node_modules
+        │   │   └── HC-SR04.js
+        │   └── ThreeWheelDistanceSensingRobotBehavior.js
+        ├── managers
+        │   ├── node_modules
+        │   │   └── EspruinoSimulator.js
+        │   └── simplemanager.js
+        └── virtualizers
+            └── ThreeWheelDistanceSensingRobotVirtualizer.js
+    user-agents/
+    ├── remote-controls
+    │   ├── codes
+    │   │   └── nexPRO.json
+    │   ├── infrared.html
+    │   └── parseUri.js
+    └── world
+        ├── assets
+        │   └── textures
+        │       ├── general
+        │       │   └── floor_stones.jpg
+        │       └── robot
+        │           └── wheel.png
+        ├── config
+        │   ├── defaults.js
+        │   └── gui.js
+        ├── libs
+        │   ├── robothree
+        │   │   └── robothree.js
+        │   └── vendor
+        │       ├── ammo.js
+        │       ├── chroma.js
+        │       ├── dat.gui.js
+        │       ├── jquery-2.1.4.min.js
+        │       ├── physi.js
+        │       ├── physijs_worker.js
+        │       ├── stats.min.js
+        │       ├── ThreeBSP.js
+        │       └── three.min.js
+        ├── representations
+        │   └── ThreeWheelDistanceSensingRobotRepresentation.js
+        └── world.html
+
+The file `world/config/defaults.js` is the place where you can tweak the main configuration of the simulation environment. Edit it at will.
+
+### Opening the simulation
+
+The files of the directory `user-agents` must be served by a webserver. If you have one, configure it so that it offers the files. Otherwise, you can use a light webserver like [https://www.npmjs.com/package/http-server](node http-server).
+
+Open your browser and point it to the `world.html` resource (probably something like [http://127.0.0.1:8080/world.html], but your configuration might be different).
+
+### Running the robot's managers
+
 You need a working version of *node* and *npm*.
-
-There are three main directories:
-
-* examples
-* servers
-* user-agents
-
-The `servers` directory contains the code of the robots' managers and the code for the behaviors of robots.
-
-The `user-agents` directory contains the code used with a browser (the simulation environment, the simulated infrared remote controls, etc.).
-
-This application is meant to be a playground. In order to let you play with the code and run your own experiments, copy the examples in the main directories,
-following the directory structure.
 
 To run the servers, you will need the `request` module, that you can obtain by typing
 
     npm install request -g
 
 (you might need to prepend this command with `sudo`).
+
+Go to the `servers/node/managers` and run the following command:
+
+    node simplemanager.js
 
 ## Credits
 
@@ -89,4 +150,4 @@ more realistic (and more complex) you could try:
 
 * Release 0.30 (January 11th, 2016): second big refactoring.
 
-
+* Release 0.31 (January 12th, 2016): added some documentation.
