@@ -482,6 +482,8 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addCamera = function addC
         var cpos = robot.getAbsolutePositionForObject( robot.cameraPosition, true ); 
         robot.camera.position.copy ( cpos );
         robot.camera.lookAt ( cref );
+        /* */
+        // TODO: we should take care of camera rotation too.
     } );
     
     return this;
@@ -525,16 +527,19 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualPen = function 
     var robot = this;
     this.pen = {
         enabled: false,
-        color: color,
+        color: new THREE.Color ( color ),
         radius: 9,
         alpha: .05,
         context: this.robotsManager.simulator.bottom.canvas.getContext('2d')
     };
     this.registeredProcessFunctions.push ( function ( ) {
         $.extend ( robot.pen, robot.receivedData.pen );
+        if ( robot.pen.enabled ) {
+            robot.batterypack.material.color.copy ( robot.pen.color );
+        }
         if ( robot.pen.enabled && robot.isMoving ) {
             var coords = robot.getBottomImagePixelCoordinatesForObject( robot.centralPoint, false );
-            robot.pen.context.fillStyle = "#" + ("000000" + robot.pen.color.toString(16)).slice(-6);
+            robot.pen.context.fillStyle = "#" + robot.pen.color.getHexString(); //("000000" + robot.pen.color.toString(16)).slice(-6);
             robot.pen.context.globalAlpha = robot.pen.alpha;
             robot.pen.context.beginPath();
             robot.pen.context.arc(
@@ -577,10 +582,7 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.process = function proces
     this.arm.__dirtyPosition = true;
     this.arm.__dirtyRotation = true;
     */
-    
-    
-    /* */
-    // TODO: we should take care of camera rotation too.
+
     
     for (var i = 0; i< this.registeredProcessFunctions.length; i++ ) {
         this.registeredProcessFunctions[i]( );
@@ -594,6 +596,8 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.update = function update 
     if (!this.isBuilt) {
         return;
     }
+
+    this.batterypack.material.color.copy ( this.batterypack.userData.normalColor );
     
     this.receivedData = data;
     
@@ -606,10 +610,6 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.update = function update 
         this.process( );
     }
     
-    if ( this.isBuilt ) {
-        // visual feedback for the fact that the communication happened correctly
-        this.batterypack.material.color.copy ( this.batterypack.userData.normalColor );
-    }
     
     //console.log ( this.data );
     
