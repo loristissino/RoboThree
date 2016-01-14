@@ -107,42 +107,42 @@ var simulationDefaults = {
         length: 10
     },
     ground: {
-        texture: 'assets/textures/general/floor-wood.jpg',
+        texture: 'assets/textures/general/floor-wood-256.png',
         friction: 1.0,
         restitution: 0.1,
         pieces: {
             bottom: {
-                sizeX: 240,
+                sizeX: 256,
                 sizeY: 2,
-                sizeZ: 240,
+                sizeZ: 256,
                 position: new THREE.Vector3( 0, -1, 0 )
             },
             leftBorder: {
                 sizeX: 4,
                 sizeY: 4,
-                sizeZ: 240,
-                position: new THREE.Vector3( -122, 2, 0 ),
+                sizeZ: 256,
+                position: new THREE.Vector3( -130, 2, 0 ),
                 color: 0xE8AE8A
             },
             rightBorder: {
                 sizeX: 4,
                 sizeY: 4,
-                sizeZ: 240,
-                position: new THREE.Vector3( 122, 2, 0 ),
+                sizeZ: 256,
+                position: new THREE.Vector3( 130, 2, 0 ),
                 color: 0xE8AE8A
             },
             topBorder: {
-                sizeX: 248,
+                sizeX: 264,
                 sizeY: 4,
                 sizeZ: 4,
-                position: new THREE.Vector3( 0, 2, -122 ),
+                position: new THREE.Vector3( 0, 2, -130 ),
                 color: 0xE8AE8A
             },
             bottomBorder: {
-                sizeX: 248,
+                sizeX: 264,
                 sizeY: 4,
                 sizeZ: 4,
-                position: new THREE.Vector3( 0, 2, 122 ),
+                position: new THREE.Vector3( 0, 2, 130 ),
                 color: 0xE8AE8A
             }/*,
             wall_1: {  
