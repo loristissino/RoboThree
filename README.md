@@ -19,14 +19,12 @@ Info on the [wiki page](https://github.com/loristissino/RoboThree/wiki/Setup).
 
 Libraries:
 
-* [Three.js](http://threejs.org/)
-* [Physijs](http://chandlerprall.github.io/Physijs/)
-* [Node.js](https://nodejs.org/en/)
-* [dat.GUI](https://code.google.com/p/dat-gui/)
-* [stats.js](http://github.com/mrdoob/stats.js)
-* [ThreeBSP](https://github.com/sshirokov/ThreeBSP)
-* [ammo.js](https://github.com/kripken/ammo.js/)
-* [parseUri](http://blog.stevenlevithan.com/archives/parseuri)
+* DOM manipulation: [jQuery](https://jquery.com/)
+* 3D graphics: [Three.js](http://threejs.org/), [ThreeBSP](https://github.com/sshirokov/ThreeBSP)
+* Physics engine: [Physijs](http://chandlerprall.github.io/Physijs/), [ammo.js](https://github.com/kripken/ammo.js/), [Bullet Physics](http://www.bulletphysics.org/)
+* Server-side work: [Node.js](https://nodejs.org/en/)
+* User Interface: [dat.GUI](https://code.google.com/p/dat-gui/)
+* Utilities: [stats.js](http://github.com/mrdoob/stats.js), [parseUri](http://blog.stevenlevithan.com/archives/parseuri)
 
 Node modules:
 
@@ -39,6 +37,7 @@ Node modules:
 * [Stemkoski's Examples](http://stemkoski.github.io/Three.js/)
 * [LearningThreejs.com](http://learningthreejs.com/)
 * [dat.GUI Tutorial](http://workshop.chromeexperiments.com/examples/gui/#1--Basic-Usage)
+* [Espruino distance sensing robot](http://www.espruino.com/distance_sensing_robot)
 
 ## Alternatives
 
