@@ -278,4 +278,12 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.toggleLedBlinking3 = function (
     return this.toggleLedBlinking( '3' );
 };
 
+ThreeWheelDistanceSensingRobotBehavior.prototype.enableSonars = function ( ) {
+    for ( key in this.sonars ) {
+        this.sonars[key].enable();
+    }
+    return this;
+};
+
+
 module.exports = ThreeWheelDistanceSensingRobotBehavior;

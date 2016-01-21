@@ -1,5 +1,5 @@
-var host = '127.0.0.1:9080';
-//var host = '192.168.1.12:9080';
+//var host = '127.0.0.1:9080';
+var host = '192.168.1.12:9080';
 
 var simulationDefaults = {
     stats: {
@@ -8,6 +8,7 @@ var simulationDefaults = {
     robotsManagers: {
         main: {
             url: "http://" + host + "/update",
+            failureColor: 0xffaaaa,
             robots: [
                 { 
                     id: 'green',
@@ -20,7 +21,7 @@ var simulationDefaults = {
                         chassis: {
                             color: 0x00bb00
                         },
-                        compassDegrees: true // whether the virtual compass returns degrees or radians
+                        debugging: true
                     }
                 },
                 {
@@ -33,7 +34,8 @@ var simulationDefaults = {
                         position: new THREE.Vector3 ( 30, 3.5, 30 ),
                         chassis: {
                             color: 0xbb0000
-                        }
+                        },
+                        debugging: false
                     }
                 }/*,
                 {
@@ -86,13 +88,17 @@ var simulationDefaults = {
     scene: {
         gravity: new THREE.Vector3(0, -30, 0),
     },
+    renderer: {
+        antialias: true,
+        backgroundColor: 0xfac94e,
+        shadows: false,
+    },
     mainCamera: {
-        fov: 35,
+        fov: 60,
         aspect: window.innerWidth / window.innerHeight,
         near: 1,
         far: 1000,
         position: new THREE.Vector3 ( 177, 113, 96 ),
-//        position: new THREE.Vector3 ( 129, 115, 50 ),
         lookAt: new THREE.Vector3( 0, 0, 0 )
     },
     light: {

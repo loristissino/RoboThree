@@ -1,7 +1,7 @@
 /**
  * @author Loris Tissino / http://loris.tissino.it
  * @package RoboThree
- * @release 0.40
+ * @release 0.50
  * @license The MIT License (MIT)
 */
 
@@ -45,26 +45,168 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.disableInfraredReader = func
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.addVirtualPen = function addVirtualPen () {
     this.infraredReader.codesMap['16619623'] = 'togglePen';
     this.pen = { enabled: false };
+    return this;
 }
 
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.togglePen = function () {
     this.pen.enabled = !this.pen.enabled;
 }
 
+ThreeWheelDistanceSensingRobotVirtualizer.prototype.addCommands = function addCommands () {
+    var robot = this;
+    this.commandManager = {
+        currentWait: false,
+        sendHTTPResponse: function (code, type, body ) {
+            robot.commandManager.originalResponse.writeHead( code, { 'content-type': type } );
+            robot.commandManager.originalResponse.write( type === 'text/json' ? JSON.stringify ( body ): body );
+            robot.commandManager.originalResponse.end();
+        },
+        commands: {
+            'stop': {
+                exec: function ( ) {
+                    robot.stop();
+                },
+                wait: function ( ) {
+                    if ( robot.leftWheel.status == 0 && robot.rightWheel.status == 0 ) {
+                            robot.commandManager.currentWait = false;
+                            robot.commandManager.sendHTTPResponse( 200, 'text/json', { stopped: true } );
+                    }
+                }
+            },
+            'moveForward': {
+                exec: function ( ) {
+                    if ( robot.commandManager.parameters.gap > 0 ) {
+                        robot.moveForward();
+                    }
+                    else {
+                        robot.moveBackward();
+                        robot.commandManager.parameters.gap = -robot.commandManager.parameters.gap;
+                    }
+                },
+                wait: function ( ) {
+                    if ( ! robot.hasOwnProperty('location' ) ) {
+                        robot.commandManager.sendHTTPResponse( 500, 'text/plain', 'Internal Server Error' );
+                        return;
+                    }
+                    var current_diff = Math.sqrt (
+                        Math.pow ( ( robot.location.x - robot.commandManager.initialState.location.x ), 2 ) +
+                        Math.pow ( ( robot.location.y - robot.commandManager.initialState.location.y ), 2 )
+                        );
+                    if ( current_diff >= robot.commandManager.parameters.gap ) {
+                            robot.commandManager.currentWait = false;
+                            robot.commandManager.sendHTTPResponse( 200, 'text/json', { moved: true } );
+                    }
+                }
+            },
+            'penUp': {
+                exec: function ( ) {
+                    console.log ( 'pulling up the pen!' );
+                    robot.pen.enabled = false;
+                },
+                wait: function ( ) {
+                    if ( robot.pen.hasOwnProperty ('status') && robot.pen.status === 'up' ) {
+                        robot.commandManager.currentWait = false;
+                        robot.commandManager.sendHTTPResponse( 200, 'text/json', { pen: 'up' } );
+                    }
+                }
+            },
+            'penDown': {
+                exec: function ( ) {
+                    console.log ( 'putting down the pen!' );
+                    robot.pen.enabled = true;
+                },
+                wait: function ( ) {
+                    if ( robot.pen.hasOwnProperty ('status') && robot.pen.status === 'down' ) {
+                        robot.commandManager.currentWait = false;
+                        robot.commandManager.sendHTTPResponse( 200, 'text/json', { pen: 'down' } );
+                    }
+                }
+            },
+            'getHeading': {
+                exec: function ( ) {
+                    console.log ( 'current heading: ' + robot.heading );
+                    return { heading: robot.heading };
+                },
+            },
+            'getSpeed': {
+                exec: function ( ) {
+                    console.log ( 'current speed: ' + robot.speed );
+                    return { heading: robot.speed };
+                },
+            },
+            'setSpeed': {
+                exec: function ( ) {
+                    robot.setSpeed ( robot.commandManager.parameters.speed );
+                    return { heading: robot.speed };
+                },
+            },
+            'getSonarMeasure': {
+                exec: function ( ) {
+                    return { distance: robot.sonars[robot.commandManager.parameters.sonar].distance  };
+                },
+            },
+        }
+    }
+}
+
+ThreeWheelDistanceSensingRobotVirtualizer.prototype.exec = function ( command, parameters, originalResponse ) {
+
+    var robot = this;
+    
+    if ( ! this.hasOwnProperty ('commandManager') ) {
+        throw "CommandManager has not been enabled for this robot";
+    }
+
+    this.commandManager.originalResponse = originalResponse;
+    this.commandManager.parameters = parameters;
+    
+    if ( this.commandManager.currentWait !== false ) {
+        robot.commandManager.sendHTTPResponse( 503, 'text/plain', 'Service Unavailable' );
+        return;
+    }
+    
+    if ( ! this.commandManager.commands.hasOwnProperty( command ) ) {
+        robot.commandManager.sendHTTPResponse( 400, 'text/plain', 'Bad Request' );
+        return;
+    }
+    
+    var command = this.commandManager.commands[command];
+
+    this.commandManager.initialState = {
+        location: { x: robot.location.x, y: robot.location.y },
+        heading: robot.heading
+    };
+
+    var result = command.exec();
+    
+    if ( command.hasOwnProperty ( 'wait' ) ) {
+        this.commandManager.currentWait = command.wait;
+    } else {
+        robot.commandManager.sendHTTPResponse( 200, 'text/json', result );
+    }
+}
+
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.update = function update ( values ) {    
     if ( typeof values !== 'undefined' )
     {
-        // inputs we don't want to overwite our data
-        if ( typeof values.dist !== 'undefined' ) {
-            this.dist = values.dist;
-        }
-        
-        // inputs that can overwrite our data or setting them to undefined
-        // this.sonars = values.sonars;
         this.infraredReader.code = values.ir;
+        this.location = values.location;
+        this.heading = values.heading;
+        this.pen.status = values.penStatus;
+        this.leftWheel.status = values.leftWheel;
+        this.rightWheel.status = values.rightWheel;
+        if ( values.hasOwnProperty('sonars') ) {
+            for (var key in values.sonars) {
+                this.sonars[key].distance = values.sonars[key].distance;
+            }
+        }
     }  
     else {
         values = {};
+    }
+    
+    if ( this.commandManager.currentWait !== false ) {
+        this.commandManager.currentWait();
     }
 
     for (var f in this.registeredCallBacks) {
@@ -74,8 +216,7 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.update = function update ( v
     values.leftWheel = this.leftWheel.getSpeed() * ( this.leftWheel.controlPins[0].xGetLastOutput() - this.leftWheel.controlPins[1].xGetLastOutput() );
     values.rightWheel = this.rightWheel.getSpeed() * ( this.rightWheel.controlPins[0].xGetLastOutput() - this.rightWheel.controlPins[1].xGetLastOutput() );
     
-    // are the sonars activated?
-    
+    // are the sonars enabled?
     values.sonars = {
         left:  { enabled: typeof this.sonars.left.interval !== 'undefined' },
         front: { enabled: typeof this.sonars.front.interval !== 'undefined' },

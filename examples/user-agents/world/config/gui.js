@@ -107,6 +107,8 @@ var guiFactory = function ( simulator ) {
         this.showAxis = false;
         
         this.showSonarDetection = false;
+        
+        this.showDebugText = false;
     }
     
     var gui = new dat.GUI();
@@ -251,6 +253,7 @@ var guiFactory = function ( simulator ) {
     debug.add(controls, 'enableAltCamera');
     debug.add(controls, 'showAxis');
     debug.add(controls, 'showSonarDetection');
+    debug.add(controls, 'showDebugText');
     debug.open();
     
     console.log ( "adding actual robots..." );

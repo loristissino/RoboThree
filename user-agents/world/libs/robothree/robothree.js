@@ -1,7 +1,7 @@
 /**
  * @author Loris Tissino / http://loris.tissino.it
  * @package RoboThree
- * @release 0.40
+ * @release 0.50
  * @license The MIT License (MIT)
 */
 
@@ -16,6 +16,7 @@ BasicRobot.prototype.setId = function setId ( id ) {
     this.data = {};  // the data sent and received when updating with HTTP posts
     this.dataPropertiesIn  = [];
     this.registeredProcessFunctions = [];
+    this.debugging = false;
     return this;
 }
 
@@ -153,9 +154,6 @@ BasicRobot.prototype.move = function move ( vector, relative ) {
 }
 
 BasicRobot.prototype.rotateOnAxis = function rotateOnAxis ( axis, angle ) {
-    // vector is a THREE.Vector3 object
-    // relative is a boolean: if true, the vector is considered a change from current position, else a final destination
-
     this.chassis.rotateOnAxis ( axis, angle );
     this.chassis.__dirtyPosition = true;
     this.chassis.__dirtyRotation = true;
@@ -201,8 +199,8 @@ BasicRobot.prototype.getBottomImagePixelCoordinatesForObject = function getBotto
 
 var RobotsManager = function ( values, simulator ) {
     console.log(values);
-    this.url = values.url;
     this.values = values;
+    this.url = values.url;
     this.simulator = simulator;
     this.robots = [];
     this.data = {};
@@ -217,6 +215,8 @@ RobotsManager.prototype.addRobot = function ( robot ) {
     var url = 'representations/' + robot.class + '.js';
 
     console.log ( 'Loading script file...' );
+    
+    // TODO avoid multiple loading of the same file
     $.getScript( url )   // in a future version we might call the robotsManager via http for this
         .done(function( script, textStatus ) {
             console.log( textStatus );
@@ -280,17 +280,20 @@ RobotsManager.prototype.update = function () {
 
 var SimulationManager = function ( defaults ) {
     
+    this.release = '0.50';
+    
     this.defaults = defaults;
 
     this.robotsManagers = {};
     
     this.loader = new THREE.TextureLoader();
 
-    this.initRenderer = function initRenderer () {
-        this.renderer = new THREE.WebGLRenderer( {antialias: true, preserveDrawingBuffer: true, alpha: true } );
+    this.initRenderer = function initRenderer ( options ) {
+        var values = $.extend ( {}, this.defaults.renderer, options );
+        this.renderer = new THREE.WebGLRenderer( {antialias: values.antialias, preserveDrawingBuffer: true, alpha: true } );
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setClearColor( 0xFAC94E, 1);
-        this.renderer.shadowMap.enabled = true;
+        this.renderer.setClearColor( values.backgroundColor, 1 );
+        this.renderer.shadowMap.enabled = values.shadows;
         $('#viewport').append(this.renderer.domElement);
         return this;
     };
@@ -298,8 +301,8 @@ var SimulationManager = function ( defaults ) {
     this.initAltRenderer = function initAltRenderer () {
         this.altRenderer = new THREE.WebGLRenderer( {antialias: false, preserveDrawingBuffer: true, alpha: false } );
         this.altRenderer.setSize(160, 120);
-        this.altRenderer.setClearColor( 0xFAC94E, 1);
-        this.altRenderer.shadowMap.enabled = true;
+        this.altRenderer.setClearColor( this.renderer.getClearColor(), 1);
+        this.altRenderer.shadowMap.enabled = this.renderer.shadowMapEnabled;
         this.altRenderer.domElement.style.position = 'absolute';
         this.altRenderer.domElement.style.top = '60px';
         this.altRenderer.domElement.style.left = '1px';
@@ -321,8 +324,39 @@ var SimulationManager = function ( defaults ) {
         $('#viewport').append(this.renderStats.domElement);
         return this;
     };
-
+    
+    this.addInfoBox = function addInfoBox() {
+        this.infoBox = $( '<div />' );
+        this.infoBox
+            .attr('id', 'infobox')
+            .html('<a title="RoboThree Project Website" target="_blank" href="https://github.com/loristissino/RoboThree/">RoboThree ' + this.release + '</a>')
+            .css('top', (window.innerHeight - 20 ) +'px')
+            ;
+        $('#viewport').append( this.infoBox );
+        this.debugBox = $('<span />');
+        this.infoBox.append ( this.debugBox );
+        this.debugBoxTexts = {};
+        return this;
+    }
+    
+    this.pushDebugText = function addDebugText ( obj ) {
+        $.extend( this.debugBoxTexts, obj );
+    }
+    
+    this.renderDebugText = function renderDebugText () {
+        if ( this.gui.userData.controls.showDebugText ) {
+            if ( Object.keys( this.debugBoxTexts ).length > 0 ) {
+                this.debugBox.text( [ '', JSON.stringify( this.debugBoxTexts ) ].join( ' - ' ) );
+            }
+        }
+        else {
+            this.debugBox.text( '' );
+        }
+        this.debugBoxTexts = {};
+    }
+    
     this.onUpdate = function onUpdate() {
+        // added as event listener of the scene, "this" refers to it
         $.each ( this.userData.simulator.robotsManagers, function ( id, robotManager ) {
             robotManager.update();
         });
@@ -331,7 +365,6 @@ var SimulationManager = function ( defaults ) {
     this.initScene = function initScene ( options ) {
 
         var values = $.extend ( {}, this.defaults.scene, options );
-        
         this.scene = new Physijs.Scene( {reportSize: 10, fixedTimeStep: 1 / 60} );
         this.scene.setGravity(values.gravity);
         this.scene.userData = { simulator: this };
@@ -417,14 +450,6 @@ var SimulationManager = function ( defaults ) {
                 simulator.bottom.canvas.height = texture.image.height;
                 simulator.bottom.canvas.getContext( '2d' ).drawImage( texture.image, 0, 0, texture.image.width, texture.image.height );
     
-                /*
-                $('#viewport').append ( simulator.bottom.canvasElement );
-                $('#mycanvas').css('position', 'absolute');
-                $('#mycanvas').css('top', '200px');
-                $('#mycanvas').css('left', '1px');
-                $('#mycanvas').css('zIndex', 98);
-                */
-                
                 var mesh, geometry;
                 
                 simulator.bottom.canvasMap = new THREE.Texture( simulator.bottom.canvas );
@@ -501,6 +526,7 @@ var SimulationManager = function ( defaults ) {
             .initRenderer()
             .initAltRenderer()
             .initRenderStats()
+            .addInfoBox()
             .initScene()
             .addAxisHelper()
             .addMainCamera()
@@ -548,6 +574,7 @@ $(function () {
         }
         simulationManager.axisHelper.visible = simulationManager.gui.userData.controls.showAxis;
         simulationManager.renderStats.update();
+        simulationManager.renderDebugText();        
     };
 
     Physijs.scripts.worker = 'libs/vendor/physijs_worker.js';

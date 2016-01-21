@@ -26,6 +26,11 @@ Libraries:
 * [ammo.js](https://github.com/kripken/ammo.js/)
 * [parseUri](http://blog.stevenlevithan.com/archives/parseuri)
 
+Node modules:
+
+* [http](https://www.npmjs.com/package/http)
+* [extend](https://www.npmjs.com/package/extend)
+
 ## Reference books and web sites
 
 * Jos Dirksen, [Learning Three.js – the JavaScript 3D Library for WebGL - Second Edition](https://www.packtpub.com/web-development/learning-threejs-javascript-3d-library-webgl-second-edition)

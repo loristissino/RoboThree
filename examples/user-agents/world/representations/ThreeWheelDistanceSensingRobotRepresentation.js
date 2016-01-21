@@ -1,7 +1,7 @@
 /**
  * @author Loris Tissino / http://loris.tissino.it
  * @package RoboThree
- * @release 0.40
+ * @release 0.50
  * @license The MIT License (MIT)
 */
 
@@ -21,13 +21,13 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.build = function build ()
             .addFrontWheel()
             .addSonars()
             .addVirtualLocator()
-            .addVirtualCompass( this.initialValues.compassDegrees )
+            .addVirtualCompass()
             .addVirtualScanner()
             .addVirtualPen( this.initialValues.chassis.color )
+            .addVirtualCamera()
             .finalizeBody()
             .addWheels()
             //.addArm()
-            .addCamera()
             ;
         this.isBuilt = true;
         return true;
@@ -44,7 +44,9 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addBody = function addBod
         chassis: {
             color: 0xffffff,
             opacity: .5,
-            mass: 600
+            mass: 600,
+            castShadow: false,
+            receiveShadow: true
         },
         board: {
             color: 0x444444,
@@ -65,8 +67,8 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addBody = function addBod
     );
     this.chassis.position.set(0, 3.5, 0);
     this.chassis.name = 'chassis';
-    this.chassis.castShadow = false;
-    this.chassis.receiveShadow = true;
+    this.chassis.castShadow = values.chassis.castShadow;
+    this.chassis.receiveShadow = values.chassis.receiveShadow;
 
     this.board = new Physijs.BoxMesh (
         new THREE.BoxGeometry( 0.5, 4.5, 4 ),
@@ -157,8 +159,8 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addBody = function addBod
         20
     );
     
-    this.back.castShadow = false;
-    this.back.receiveShadow = true;
+    this.back.castShadow = values.chassis.castShadow;
+    this.back.receiveShadow = values.chassis.receiveShadow;
     
     this.back.position.set ( 4, 2.3, 0 );
     this.back.name = 'back';
@@ -444,7 +446,7 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.finalizeBody = function f
     return this;
 }
 
-ThreeWheelDistanceSensingRobotRepresentation.prototype.addCamera = function addCamera () {
+ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualCamera = function addVirtualCamera () {
 
     this.camera = new THREE.PerspectiveCamera(
         35,
@@ -454,13 +456,13 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addCamera = function addC
     );
     
     this.cameraPosition = new THREE.Object3D();
-    this.cameraPosition.position.set ( -3, 6.5, 0 );
+    this.cameraPosition.position.set ( -3, 8, 0 );
     this.chassis.add ( this.cameraPosition );
     
     this.camera.position.copy ( this.cameraPosition );
 
     this.cameraReference = new THREE.Object3D();
-    this.cameraReference.position.set ( -6, 6.5, 0 );
+    this.cameraReference.position.set ( -6, 8, 0 );
     this.chassis.add ( this.cameraReference );
 
     this.camera.lookAt ( this.cameraReference );
@@ -494,18 +496,19 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualLocator = funct
     this.registeredProcessFunctions.push ( function () {
         var coords = robot.getAbsolutePositionForObject( robot.centralPoint, true );
         robot.data.location = { x: coords.x, y: coords.z };
+        robot.initialValues.debugging && robot.robotsManager.simulator.pushDebugText( { location: { x: robot.data.location.x.toFixed(2), y: robot.data.location.x.toFixed(2) } } );
     } );
     return this;
 }
 
-ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualCompass = function addVirtualCompass ( degrees ) {
+ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualCompass = function addVirtualCompass () {
     var robot = this;
-    var d = degrees || false;
     this.registeredProcessFunctions.push ( function ( ) {
         var fsp = robot.getAbsolutePositionForObject( robot.frontSonar, true );
         var cpp = robot.getAbsolutePositionForObject( robot.centralPoint, false );
-        var angle = robot.getAngle( fsp, cpp, ['z','x'] );
-        robot.data.compass = d ? THREE.Math.radToDeg ( angle ) : angle;
+        robot.data.heading = robot.getAngle( fsp, cpp, ['z','x'] );
+        robot.initialValues.debugging && robot.robotsManager.simulator.pushDebugText( { heading: robot.data.heading.toFixed(2) } );
+        //robot.initialValues.debugging && robot.robotsManager.simulator.pushDebugText( { rotation: [ robot.chassis.rotation._x.toFixed(3), robot.chassis.rotation._y.toFixed(3), robot.chassis.rotation._z.toFixed(3)] } );
     } );
     return this;
 }
@@ -555,6 +558,7 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualPen = function 
             robot.robotsManager.simulator.bottom.canvasMap.image = robot.robotsManager.simulator.bottom.canvas;
             robot.robotsManager.simulator.bottom.canvasMap.needsUpdate = true;
         }
+        robot.data.penStatus = robot.pen.enabled ? 'down': 'up';
     } );
     return this;
 }
@@ -618,7 +622,7 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.update = function update 
 
 ThreeWheelDistanceSensingRobotRepresentation.prototype.manageCommunicationFailure = function manageCommunicationFailure () {
     if ( this.isBuilt ) {
-        this.batterypack.material.color.setHex( 0xffaaaa );
+        this.batterypack.material.color.setHex( this.robotsManager.values.failureColor );
     }
     return this.data;
 }
