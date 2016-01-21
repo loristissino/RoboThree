@@ -9,6 +9,8 @@ _RoboThree_ aims to be a very simple 3D simulation environment for robots.
 It is JavaScript-based. The client side (the simulation environment) is implemented using *jQuery*, *Three.js* and other useful libraries (see Credits, below).
 The server side (robots' behaviors) is implemented using *node.js* and emulating an [Espruino board](http://www.espruino.com/). Nothing prevents from implementing the server side in other programming languages, as long as they can read and write data in JSON format and manage a very simple HTTP server.
 
+Simulated robots can have virtual devices (like onboard cameras, a compass, etc.) and can be programmed at low or high level.
+
 ## Setup
 
 Info on the [wiki page](https://github.com/loristissino/RoboThree/wiki/Setup).
@@ -64,3 +66,6 @@ more realistic (and more complex) you could try:
 * Release 0.40 (January 12th, 2016): fixed some bugs in documentation, renamed some files, added comments in the code.
 
 * Release 0.41 (January 13th, 2016): added wiki pages to the web site.
+
+* Release 0.50 (January 21st, 2016): added RobotCommander
+
