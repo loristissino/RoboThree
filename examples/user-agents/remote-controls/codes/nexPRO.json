@@ -1,6 +1,8 @@
 {
     "name": "nexPRO",
     "keptpressed": 3,
+    "width": 130,
+    "height": 355,
     "buttons" : {
         "up": {
             "content": "⇧",

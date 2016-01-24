@@ -100,6 +100,12 @@ var guiFactory = function ( simulator ) {
             console.log (dataUrl);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
         }
         
+        this.activateIRrcs = function() {
+            for (var i=0; i< gui.userData.windows.length; i++ ) {
+                gui.userData.windows[i].focus();
+            }
+        }
+        
         this.simulate = false;
         
         this.enableAltCamera = true;
@@ -160,7 +166,7 @@ var guiFactory = function ( simulator ) {
                 if ( robot.hasController() ) {
                     property = 'ir: ' + robot.id;
                     controls[property] = function () {
-                        window.open(robot.controllerUrl + '&id='+robot.id, robot.id, 'width=130, height=355, scrollbars=no, status=no');
+                        gui.userData.windows.push(window.open(robot.controllerUrl + '&id='+robot.id, robot.id, 'width=100, height=300, scrollbars=no, status=no'));
                     }
                     manager.add(controls, property);
                 }
@@ -207,7 +213,8 @@ var guiFactory = function ( simulator ) {
     
     gui.userData = {
         controls: controls,
-        cameras: {}
+        cameras: {},
+        windows: []
     };
     
     gui.userData.cameras['main'] = simulator.mainCamera.uuid;
@@ -254,6 +261,7 @@ var guiFactory = function ( simulator ) {
     debug.add(controls, 'showAxis');
     debug.add(controls, 'showSonarDetection');
     debug.add(controls, 'showDebugText');
+    debug.add(controls, 'activateIRrcs');
     debug.open();
     
     console.log ( "adding actual robots..." );

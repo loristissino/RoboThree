@@ -1,5 +1,5 @@
-//var host = '127.0.0.1:9080';
-var host = '192.168.1.12:9080';
+var host = '127.0.0.1:9080';
+//var host = '192.168.1.12:9080';
 
 var simulationDefaults = {
     stats: {
@@ -15,7 +15,7 @@ var simulationDefaults = {
                     name: "First",
                     owner: 'Player One',
                     class: 'ThreeWheelDistanceSensingRobotRepresentation',
-                    controllerUrl: '../remote-controls/infrared.html?server=http://' + host + '/update&codes=nexPRO&color=00bb00',
+                    controllerUrl: '../remote-controls/infrared.html?server=http://' + host + '/update&codes=nexPRO&color=00bb00&posX=10&posY=280',
                     initialValues: {
                         position: new THREE.Vector3 ( 0, 3.5, 0 ),
                         chassis: {
@@ -29,7 +29,7 @@ var simulationDefaults = {
                     name: "Second",
                     owner: 'Player Two',
                     class: 'ThreeWheelDistanceSensingRobotRepresentation',
-                    controllerUrl: '../remote-controls/infrared.html?server=http://' + host + '/update&codes=nexPRO&color=bb0000',
+                    controllerUrl: '../remote-controls/infrared.html?server=http://' + host + '/update&codes=nexPRO&color=bb0000&posX=150&posY=280',
                     initialValues: {
                         position: new THREE.Vector3 ( 30, 3.5, 30 ),
                         chassis: {
@@ -98,7 +98,7 @@ var simulationDefaults = {
         aspect: window.innerWidth / window.innerHeight,
         near: 1,
         far: 1000,
-        position: new THREE.Vector3 ( 177, 113, 96 ),
+        position: new THREE.Vector3 ( 0, 150, 100 ),
         lookAt: new THREE.Vector3( 0, 0, 0 )
     },
     light: {

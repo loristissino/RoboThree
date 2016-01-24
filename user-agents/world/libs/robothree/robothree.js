@@ -1,7 +1,7 @@
 /**
  * @author Loris Tissino / http://loris.tissino.it
  * @package RoboThree
- * @release 0.50
+ * @release 0.51
  * @license The MIT License (MIT)
 */
 
@@ -276,11 +276,9 @@ RobotsManager.prototype.update = function () {
     });
 }
 
-
-
 var SimulationManager = function ( defaults ) {
     
-    this.release = '0.50';
+    this.release = '0.51';
     
     this.defaults = defaults;
 
@@ -300,7 +298,7 @@ var SimulationManager = function ( defaults ) {
 
     this.initAltRenderer = function initAltRenderer () {
         this.altRenderer = new THREE.WebGLRenderer( {antialias: false, preserveDrawingBuffer: true, alpha: false } );
-        this.altRenderer.setSize(160, 120);
+        this.altRenderer.setSize(160, Math.round( 160 * this.renderer.getSize().height / this.renderer.getSize().width ));
         this.altRenderer.setClearColor( this.renderer.getClearColor(), 1);
         this.altRenderer.shadowMap.enabled = this.renderer.shadowMapEnabled;
         this.altRenderer.domElement.style.position = 'absolute';
@@ -582,6 +580,7 @@ $(function () {
 
     var simulationManager = new SimulationManager( simulationDefaults );
     simulationManager.initSimulation();
+    
     render();
 });
 

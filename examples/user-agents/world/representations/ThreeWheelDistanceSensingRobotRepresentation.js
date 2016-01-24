@@ -384,7 +384,7 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addSonars = function addS
                 var dir = asp.clone().sub(ref).normalize();
                 robot.data.sonars[key].distance = Infinity;
 
-                for ( i=0; i < robot.sonarData.variants.length; i++) {
+                for ( i=0; i < robot.sonarData.variants.length; i++ ) {
                     robot[name].userData.raycasters[i].direction = dir.clone();
                     
                     switch ( robot.sonarData.variants[i].type ) {
@@ -542,7 +542,7 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualPen = function 
         }
         if ( robot.pen.enabled && robot.isMoving ) {
             var coords = robot.getBottomImagePixelCoordinatesForObject( robot.centralPoint, false );
-            robot.pen.context.fillStyle = "#" + robot.pen.color.getHexString(); //("000000" + robot.pen.color.toString(16)).slice(-6);
+            robot.pen.context.fillStyle = "#" + robot.pen.color.getHexString();
             robot.pen.context.globalAlpha = robot.pen.alpha;
             robot.pen.context.beginPath();
             robot.pen.context.arc(
