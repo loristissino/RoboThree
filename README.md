@@ -68,3 +68,5 @@ more realistic (and more complex) you could try:
 
 * Release 0.50 (January 21st, 2016): added RobotCommander
 
+* Release 0.51 (January 24th, 2016): fixed some little UI problems
+
