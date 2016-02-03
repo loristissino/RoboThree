@@ -1,7 +1,7 @@
 /**
  * @author Loris Tissino / http://loris.tissino.it
  * @package RoboThree
- * @release 0.50
+ * @release 0.60
  * @license The MIT License (MIT)
 */
 
@@ -20,6 +20,7 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.build = function build ()
             .addBody()
             .addFrontWheel()
             .addSonars()
+            .addBuzzer()
             .addVirtualLocator()
             .addVirtualCompass()
             .addVirtualScanner()
@@ -445,6 +446,38 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.finalizeBody = function f
     this.scene.add ( this.chassis );
     return this;
 }
+
+ThreeWheelDistanceSensingRobotRepresentation.prototype.addBuzzer = function addBuzzer () {
+    // see https://developer.mozilla.org/en/docs/Web/API/AudioContext
+    // see http://chimera.labs.oreilly.com/books/1234000001552/ch01.html
+    // http://shop.oreilly.com/product/0636920025948.do
+    var robot = this;
+    this.buzzer = {
+        audioCtx: new (window.AudioContext || window.webkitAudioContext || window.audioContext)
+    };
+    this.buzzer.beep = function beep ( duration, frequency, volume, type, callback ) {
+        var oscillator = robot.buzzer.audioCtx.createOscillator();
+        var gainNode = robot.buzzer.audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(robot.buzzer.audioCtx.destination);
+        if ( volume ) { gainNode.gain.value = volume; };
+        if ( frequency ) { oscillator.frequency.value = frequency; }
+        if ( type ) { oscillator.type = type; }
+        if ( callback ) { oscillator.onended = callback; }
+        oscillator.start();
+        setTimeout( function() {
+            oscillator.stop();
+        }, (duration ? duration : 500) );
+    };
+    robot.dataPropertiesIn.push ( 'buzzer' );
+    robot.registeredProcessFunctions.push ( function () {
+        if ( robot.data.buzzer.status == 1 ) {
+            robot.buzzer.beep ( robot.data.buzzer.duration, robot.data.buzzer.frequency );
+            robot.data.buzzer.status = 2;
+        }
+    } );
+    return this;
+};
 
 ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualCamera = function addVirtualCamera () {
 

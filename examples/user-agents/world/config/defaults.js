@@ -1,5 +1,5 @@
-var host = '127.0.0.1:9080';
-//var host = '192.168.1.12:9080';
+//var host = '127.0.0.1:9080';
+var host = '192.168.1.12:9080';
 
 var simulationDefaults = {
     stats: {
@@ -91,7 +91,7 @@ var simulationDefaults = {
     renderer: {
         antialias: true,
         backgroundColor: 0xfac94e,
-        shadows: true,
+        shadows: false, 
     },
     mainCamera: {
         fov: 60,
@@ -150,37 +150,37 @@ var simulationDefaults = {
                 sizeZ: 4,
                 position: new THREE.Vector3( 0, 2, 130 ),
                 color: 0xE8AE8A
-            }/*,
+            },/*
             wall_1: {  
-                sizeX: 80,
+                sizeX: 160,
                 sizeY: 16,
                 sizeZ: 4,
-                position: new THREE.Vector3( 2, 8, -40 ),
-                color: 0xADD8E6 /*,
-                rotation: new THREE.Vector3( 0, Math.PI / 10, 0 )*/
-            /*},
+                position: new THREE.Vector3( 2, 8, -80 ),
+                color: 0xADD8E6,
+                // rotation: new THREE.Vector3( 0, Math.PI / 10, 0 )
+            },
             wall_2: {
                 sizeX: 4,
                 sizeY: 16,
-                sizeZ: 80,
-                position: new THREE.Vector3( -40, 8, -2 ), 
+                sizeZ: 160,
+                position: new THREE.Vector3( -80, 8, -2 ), 
                 color: 0xFCB6FC,
                 opacity: 0.4,
                 mass: 100
-            }/*,
+            },
             wall_3: {
                 sizeX: 4,
                 sizeY: 16,
-                sizeZ: 80,
-                position: new THREE.Vector3( 40, 8, 2 ), 
+                sizeZ: 160,
+                position: new THREE.Vector3( 80, 8, 2 ), 
                 color: 0xD5FDD5,
                 opacity: 0.4
-            }/*,
+            },
             wall_4: {
-                sizeX: 80,
+                sizeX: 160,
                 sizeY: 16,
                 sizeZ: 4,
-                position: new THREE.Vector3( -2, 8, 40 ), 
+                position: new THREE.Vector3( -2, 8, 80 ), 
                 color: 0xFFD891,
                 opacity: 0.4
             }*/

@@ -63,7 +63,7 @@ var guiFactory = function ( simulator ) {
             simulator.light.intensity = controls.lightIntensity;
         };
  
-        this.meshColor = "#7CFF7D";
+        this.meshColor = "#0000dd";
         
         this.addBoxMesh = function () {
             var cube = new Physijs.BoxMesh(
@@ -188,24 +188,6 @@ var guiFactory = function ( simulator ) {
                     robot.rotateOnAxis ( new THREE.Vector3 ( 0, 1, 0 ), -5 * Math.PI/180 );
                 }
                 manager.add(controls, property);
-
-                /*
-                var interval;
-
-                property = 'continuos rot: ' + robot.id;
-                controls[property] = function () {
-                    interval = setInterval ( function () {
-                        robot.rotateOnAxis ( new THREE.Vector3 ( 0, 1, 0 ), 3 * (-2*Math.PI/360) );
-                    }, 500 );
-                }
-                manager.add(controls, property);
-
-                property = 'stop rot: ' + robot.id;
-                controls[property] = function () {
-                    clearInterval ( interval );
-                }
-                manager.add(controls, property);
-                */
                 
             });
         });

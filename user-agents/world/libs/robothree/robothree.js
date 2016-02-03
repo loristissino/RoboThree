@@ -1,7 +1,7 @@
 /**
  * @author Loris Tissino / http://loris.tissino.it
  * @package RoboThree
- * @release 0.51
+ * @release 0.60
  * @license The MIT License (MIT)
 */
 
@@ -278,7 +278,7 @@ RobotsManager.prototype.update = function () {
 
 var SimulationManager = function ( defaults ) {
     
-    this.release = '0.51';
+    this.release = '0.60';
     
     this.defaults = defaults;
 

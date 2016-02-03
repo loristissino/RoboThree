@@ -28,6 +28,7 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.createPins = function create
         global[aliases[i].source] = global[aliases[i].target];
     }
     this.registeredCallBacks = {};
+    console.log ('pins created');
     return this;
 }
 
@@ -85,7 +86,7 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.addCommands = function addCo
                 },
                 wait: function ( ) {
                     if ( ! robot.hasOwnProperty('location' ) ) {
-                        robot.commandManager.sendHTTPResponse( 500, 'text/plain', 'Internal Server Error' );
+                        robot.commandManager.sendHTTPResponse( 500, 'text/plain', 'Internal Error' );
                         return;
                     }
                     var current_diff = Math.sqrt (
@@ -147,6 +148,7 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.addCommands = function addCo
             },
         }
     }
+    return this;
 }
 
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.exec = function ( command, parameters, originalResponse ) {
@@ -200,6 +202,11 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.update = function update ( v
                 this.sonars[key].distance = values.sonars[key].distance;
             }
         }
+        if ( values.hasOwnProperty('buzzer') ) {
+            if ( values.buzzer.status == 2 ) {
+                this.buzzer.status = 0;
+            }
+        }
     }  
     else {
         values = {};
@@ -227,6 +234,7 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.update = function update ( v
     values.led2 = this.leds['2'].status;
     values.led3 = this.leds['3'].status;
     values.pen = this.pen;
+    values.buzzer = this.buzzer;
     
     return values;
 }

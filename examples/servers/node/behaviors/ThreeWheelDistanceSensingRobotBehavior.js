@@ -1,11 +1,48 @@
 /**
  * @author Loris Tissino / http://loris.tissino.it
  * @package RoboThree
- * @release 0.40
+ * @release 0.60
  * @license The MIT License (MIT)
  * @see http://www.espruino.com/Reference
 */
+
 var hcsr04 = require("HC-SR04");
+var ir = require("IRReceiver");
+
+var IRR = function ( pin, codesMap, leftSubtract ) {
+    this.codesMap = codesMap;
+    this.pin = pin;
+    this.received = '';
+    this.leftSubtract = leftSubtract;
+    this.code = '';  // we keep track of the last code executed for managing kept pressed keys
+    this.interval = false;
+    var self = this;
+};
+
+IRR.prototype.enable = function ( callback ) {
+    var self = this;
+    this.callback = callback;
+    ir.connect(this.pin, function ( receivedCode ) {
+        self.received = receivedCode;
+		if ( self.received.length > 1 ) {
+			// new code
+			var decimalValue = parseInt(self.received.substring(self.leftSubtract), 2);
+			if ( decimalValue > 1 ) {
+				self.code = decimalValue.toString();
+			}
+		}
+    });
+    this.interval = setInterval ( function () {
+		if ( self.received == '1' ) {
+			self.received = '';
+		}
+		else if (self.received.length <= 1) {
+			self.code = '0';
+		}
+		self.callback();
+			
+	}, 200);
+};
 
 var Sonar = function ( triggerPin, echoPin, frequency ) {
     this.triggerPin = triggerPin;
@@ -73,7 +110,7 @@ var Led = function ( pin, blinkingTime ) {
     this.blinkingTime = blinkingTime;
     this.status = 0;
     this.pin.write( this.status );
-    this.interval = undefined;
+    this.interval = false;
 };
 
 Led.prototype.toggle = function () {
@@ -81,9 +118,12 @@ Led.prototype.toggle = function () {
 };
 
 Led.prototype.clearInterval = function () {
-    clearInterval ( this.interval );
-    this.interval = undefined;
-}
+    console.log ( this );
+    if ( this.interval !== false ) {
+        clearInterval ( this.interval );
+    }
+    this.interval = false;
+};
 
 Led.prototype.switchOn = function () {
     this.pin.write( this.status = 1 );
@@ -95,40 +135,59 @@ Led.prototype.switchOff = function () {
     this.clearInterval();
 };
 
+var Buzzer = function ( pin, frequency, duration ) {
+    this.pin = pin;
+    this.defaultFrequency = frequency;
+    this.defaultDuration = duration;
+    this.status = 0;  // 0: off;  1: beeping;  2: replicated
+};
+
+Buzzer.prototype.beep = function ( frequency, duration ) {
+    var self = this;
+    this.frequency = frequency || this.defaultFrequency;
+    this.duration = duration || this.defaultDuration;
+    if ( this.status !== 1 ) {
+        analogWrite(self.pin, 0.5, { freq: self.frequency } );
+        this.status = 1;
+        setTimeout ( function() {
+            digitalWrite(self.pin, 0);
+            this.status = 0;
+        }, self.duration );
+    }
+};
+
 var ThreeWheelDistanceSensingRobotBehavior = function ( id ) {
     this.id = id;
     this.data = {};
     this.config = {};
+    this.playing = false;
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.setup = function ( options ) {
-    this.infraredReader = {
-        pin: B3,
-        code: 0, 
-        lastTime: undefined,
-        watchOn: undefined,
-        watchOff: undefined,
-        codesMap: {
-            '16605343': 'moveForward',
-            '16607383': 'moveBackward',
-            '16603813': 'turnLeft',
-            '16635943': 'turnRight',
-            '16603303': 'stop',
-            '66502975': 'decreaseSpeed',
-            '66462175': 'increaseSpeed',
-            '66478495': 'stop',
-            '0'       : 'stop',
-            '16597693': 'toggleLedBlinking1',
-            '16581373': 'toggleLedBlinking2',
-            '16629823': 'toggleLedBlinking3',
-            '16599733': 'rightForward',
-            '16607893': 'rightBackward',
-            '16631863': 'leftForward',
-            '16640023': 'leftBackward'
-        }
-    };
+    this.infraredReader = new IRR ( B3, {
+            '16605343': { exec: 'moveForward', repeatOnKeptPressed: true },
+            '16607383': { exec: 'moveBackward', repeatOnKeptPressed: true },
+            '16603813': { exec: 'turnLeft', repeatOnKeptPressed: true },
+            '16635943': { exec: 'turnRight', repeatOnKeptPressed: true },
+            '16603303': { exec: 'stop', repeatOnKeptPressed: false },
+            '66502975': { exec: 'decreaseSpeed', repeatOnKeptPressed: true },
+            '66462175': { exec: 'increaseSpeed', repeatOnKeptPressed: true },
+            '66478495': { exec: 'stop', repeatOnKeptPressed: false },
+            '0'       : { exec: 'stop', repeatOnKeptPressed: false },
+            '16597693': { exec: 'toggleLedBlinking1', repeatOnKeptPressed: false },
+            '16581373': { exec: 'toggleLedBlinking2', repeatOnKeptPressed: false },
+            '16629823': { exec: 'toggleLedBlinking3', repeatOnKeptPressed: false },
+            '16599733': { exec: 'rightForward', repeatOnKeptPressed: true },
+            '16607893': { exec: 'rightBackward', repeatOnKeptPressed: true },
+            '16631863': { exec: 'leftForward', repeatOnKeptPressed: true },
+            '16640023': { exec: 'leftBackward', repeatOnKeptPressed: true },
+            '16609423': { exec: 'play', repeatOnKeptPressed: false },
+            '16599223': { exec: 'pause', repeatOnKeptPressed: false },
+        },
+        1
+    );
     this.leftWheel = new Wheel ( A2, [ A4, A3 ], 1);
-    this.rightWheel = new Wheel ( A7, [ A5, A6 ], 0.98);
+    this.rightWheel = new Wheel ( A7, [ A5, A6 ], 0.75);
     this.speed = 0;
     this.leds = {
         '1': new Led ( LED1, 700 ),
@@ -140,45 +199,16 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.setup = function ( options ) {
         'front': new Sonar ( C3, C2, 1000 ),
         'right': new Sonar ( C4, C5, 1000 )
     };
+    this.buzzer = new Buzzer( B6, 110, 100 );
+    
+    this.checkForObstacles = { enabled: false };
     
     return this;
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.enableInfraredReader = function () {
-    this.infraredReader.watchOn = setWatch(
-        this.handleInfraredReaderOn.bind(this),
-        this.infraredReader.pin,
-        { repeat:true, edge: "rising" }
-    );
-    this.infraredReader.watchOff = setWatch(
-        this.handleInfraredReaderOff.bind(this),
-        this.infraredReader.pin,
-        { repeat:true, edge: "falling" }
-    );
+    this.infraredReader.enable ( this.handleInfraredReaderCode.bind(this) );
     return this;
-};
-
-ThreeWheelDistanceSensingRobotBehavior.prototype.disableInfraredReader = function () {
-    clearWatch ( this.infraredReader.watchOn );
-    clearWatch ( this.infraredReader.watchOff );
-    return this;
-};
-
-ThreeWheelDistanceSensingRobotBehavior.prototype.handleInfraredReaderOn = function ( e ) {
-    // adapted from http://www.espruino.com/Infrared+Remote+Control
-    // (not fully working, unfortunately)
-    this.infraredReader.code = ( this.infraredReader.code * 2) | (( e.time - this.infraredReader.lastTime ) > 0.0008);
-    if ( typeof this.infraredReader.timeout !== "undefined") {
-        clearTimeout( this.infraredReader.timeout );
-    }
-    this.infraredReader.timeout = setTimeout( this.handleInfraredReaderCode.bind(this), 20);
-    this.infraredReader.lastTime = e.time;
-    console.log (e.time);
-};
-
-ThreeWheelDistanceSensingRobotBehavior.prototype.handleInfraredReaderOff = function ( e ) {
-    this.infraredReader.lastTime = e.time;
-    console.log (e.time);
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.handleInfraredReaderCode = function () {
@@ -186,13 +216,14 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.handleInfraredReaderCode = func
         return;
     }
     if ( this.infraredReader.codesMap.hasOwnProperty ( this.infraredReader.code ) ) {
-        this[this.infraredReader.codesMap[this.infraredReader.code]]();
+        var action = this.infraredReader.codesMap[this.infraredReader.code];
+        if ( action.repeatOnKeptPressed === true || this.infraredReader.received != '1' ) {
+            this[action.exec]();
+        }
     }
     else {
         console.log ( 'IR code read: ' + this.infraredReader.code + ' (not handled)');
     }
-    delete this.infraredReader.timeout;
-    this.infraredReader.code = 0;
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.moveForward = function () {
@@ -236,6 +267,21 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.stop = function stop () {
     this.rightWheel.stop();
 };
 
+ThreeWheelDistanceSensingRobotBehavior.prototype.backup = function () {
+    this.inManeuver = true;
+    this.beep();
+    var self = this;
+    var lr = self.sonars.left.distance > self.sonars.right.distance ? 'L': 'R';
+    self.moveBackward();
+    setTimeout( function() {
+        lr == 'L' ? self.turnLeft(): self.turnRight();
+        setTimeout( function() {
+            self.inManeuver = false;
+            self.moveForward(); // forward again
+        }, 500);
+    }, 2000);
+};
+
 ThreeWheelDistanceSensingRobotBehavior.prototype.setSpeed = function ( speed ) {
     this.speed = E.clip ( speed, 0.0, 1.0 );
     this.leftWheel.setSpeed(this.speed);
@@ -253,15 +299,14 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.increaseSpeed = function ( ) {
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.toggleLedBlinking = function ( led ) {
     var robot = this;
-    if ( typeof this.leds[led].interval === 'undefined' ) {
+    if ( this.leds[led].interval === false ) {
         this.leds[led].interval = setInterval ( function() {
             robot.leds[led].toggle();
         }, this.leds[led].blinkingTime );
     }
     else {
         robot.leds[led].switchOff();
-        clearInterval ( this.leds[led].interval );
-        this.leds[led].interval = undefined;
+        this.leds[led].clearInterval();
     }
     return this;
 };
@@ -279,11 +324,36 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.toggleLedBlinking3 = function (
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.enableSonars = function ( ) {
-    for ( key in this.sonars ) {
+    for ( var key in this.sonars ) {
         this.sonars[key].enable();
     }
     return this;
 };
 
+ThreeWheelDistanceSensingRobotBehavior.prototype.beep = function ( ) {
+    this.buzzer.beep();
+    return this;
+};
+
+ThreeWheelDistanceSensingRobotBehavior.prototype.play = function () {
+    var self = this;
+    this.inManeuver = false;
+    if (!this.playing) {
+        this.moveForward();
+        this.playing = setInterval(function() {
+            if ( self.sonars.front.distance < 20 && !self.inManeuver ) {
+                self.backup();
+            }
+        }, 50);
+    }
+};
+
+ThreeWheelDistanceSensingRobotBehavior.prototype.pause = function () {
+    this.stop();
+    if ( this.playing ) {
+        clearInterval( this.playing );
+        this.playing = false;
+    }
+};
 
 module.exports = ThreeWheelDistanceSensingRobotBehavior;
