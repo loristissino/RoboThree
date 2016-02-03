@@ -70,3 +70,4 @@ more realistic (and more complex) you could try:
 
 * Release 0.51 (January 24th, 2016): fixed some little UI problems
 
+* Release 0.60 (February 3rd, 2016): added buzzer and some enhacements
