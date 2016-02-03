@@ -49,7 +49,7 @@ var Sonar = function ( triggerPin, echoPin, frequency ) {
     this.echoPin = echoPin;
     this.frequency = frequency;
     this.distance = Infinity;
-    this.interval = undefined;
+    this.interval = false;
 };
 
 Sonar.prototype.enable = function () {
@@ -63,11 +63,11 @@ Sonar.prototype.enable = function () {
 };
 
 Sonar.prototype.disable = function () {
-    if ( typeof this.interval !== 'undefined' ) {
+    if ( this.interval !== false ) {
         clearInterval( this.interval );
     }
     this.distance = Infinity;
-    this.interval = undefined;
+    this.interval = false;
 };
 
 var Wheel = function ( enablePin, controlPins, calibrationFactor) {
@@ -195,9 +195,9 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.setup = function ( options ) {
         '3': new Led ( LED3, 300 )
     };
     this.sonars = {
-        'left': new Sonar ( C1, C0, 1000 ),
-        'front': new Sonar ( C3, C2, 1000 ),
-        'right': new Sonar ( C4, C5, 1000 )
+        'left': new Sonar ( C1, C0, 250 ),
+        'front': new Sonar ( C3, C2, 250 ),
+        'right': new Sonar ( C4, C5, 250 )
     };
     this.buzzer = new Buzzer( B6, 110, 100 );
     
@@ -346,6 +346,7 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.play = function () {
             }
         }, 50);
     }
+    return this;
 };
 
 ThreeWheelDistanceSensingRobotBehavior.prototype.pause = function () {
@@ -354,6 +355,7 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.pause = function () {
         clearInterval( this.playing );
         this.playing = false;
     }
+    return this;
 };
 
 module.exports = ThreeWheelDistanceSensingRobotBehavior;
