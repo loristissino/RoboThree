@@ -91,7 +91,7 @@ var simulationDefaults = {
     renderer: {
         antialias: true,
         backgroundColor: 0xfac94e,
-        shadows: true, 
+        shadows: false, 
     },
     mainCamera: {
         fov: 60,
