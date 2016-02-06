@@ -1,7 +1,7 @@
 /**
  * @author Loris Tissino / http://loris.tissino.it
  * @package RoboThree
- * @release 0.60
+ * @release 0.61
  * @license The MIT License (MIT)
 */
 
@@ -19,7 +19,7 @@ extend ( global, require('EspruinoSimulator') );
 
 var port = process.argv[2] || 9080;
 
-var roboThreeRelease = '0.60';
+var roboThreeRelease = '0.61';
 var managerName = "Simple Robots' manager";
 
 var robots = {

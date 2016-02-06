@@ -1,7 +1,7 @@
 /**
  * @author Loris Tissino / http://loris.tissino.it
  * @package RoboThree
- * @release 0.60
+ * @release 0.61
  * @license The MIT License (MIT)
  * @see http://www.espruino.com/Reference
 */

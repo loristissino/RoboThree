@@ -1,7 +1,7 @@
 /**
  * @author Loris Tissino / http://loris.tissino.it
  * @package RoboThree
- * @release 0.60
+ * @release 0.61
  * @license The MIT License (MIT)
 */
 
@@ -276,9 +276,9 @@ RobotsManager.prototype.update = function () {
     });
 }
 
-var SimulationManager = function ( defaults ) {
+var Simulator = function ( defaults ) {
     
-    this.release = '0.60';
+    this.release = '0.61';
     
     this.defaults = defaults;
 
@@ -354,8 +354,7 @@ var SimulationManager = function ( defaults ) {
     }
     
     this.onUpdate = function onUpdate() {
-        // added as event listener of the scene, "this" refers to it
-        $.each ( this.userData.simulator.robotsManagers, function ( id, robotManager ) {
+        $.each ( this.robotsManagers, function ( id, robotManager ) {
             robotManager.update();
         });
     }
@@ -366,7 +365,7 @@ var SimulationManager = function ( defaults ) {
         this.scene = new Physijs.Scene( {reportSize: 10, fixedTimeStep: 1 / 60} );
         this.scene.setGravity(values.gravity);
         this.scene.userData = { simulator: this };
-        this.scene.addEventListener( 'update', this.onUpdate ); 
+        this.scene.addEventListener( 'update', this.onUpdate.bind( this ) ); 
         return this;
     };
 
@@ -557,29 +556,29 @@ var SimulationManager = function ( defaults ) {
 $(function () {
 
     function render () {
-        if ( simulationManager.gui.userData.controls.simulate )
+        if ( simulator.gui.userData.controls.simulate )
         {
-            simulationManager.scene.simulate();
+            simulator.scene.simulate();
         }
         requestAnimationFrame ( render );
-        simulationManager.renderer.render ( simulationManager.scene, simulationManager.usedCamera );
-        if ( simulationManager.gui.userData.controls.enableAltCamera && simulationManager.usedCamera.name !== 'main' ) {
-            simulationManager.altRenderer.render ( simulationManager.scene, simulationManager.mainCamera );
-            simulationManager.altRenderer.domElement.style.visibility = 'visible';
+        simulator.renderer.render ( simulator.scene, simulator.usedCamera );
+        if ( simulator.gui.userData.controls.enableAltCamera && simulator.usedCamera.name !== 'main' ) {
+            simulator.altRenderer.render ( simulationManager.scene, simulator.mainCamera );
+            simulator.altRenderer.domElement.style.visibility = 'visible';
         }
         else {
-            simulationManager.altRenderer.domElement.style.visibility = 'hidden';
+            simulator.altRenderer.domElement.style.visibility = 'hidden';
         }
-        simulationManager.axisHelper.visible = simulationManager.gui.userData.controls.showAxis;
-        simulationManager.renderStats.update();
-        simulationManager.renderDebugText();        
+        simulator.axisHelper.visible = simulator.gui.userData.controls.showAxis;
+        simulator.renderStats.update();
+        simulator.renderDebugText();        
     };
 
     Physijs.scripts.worker = 'libs/vendor/physijs_worker.js';
     Physijs.scripts.ammo = 'ammo.js';
 
-    var simulationManager = new SimulationManager( simulationDefaults );
-    simulationManager.initSimulation();
+    var simulator = new Simulator( simulationDefaults );
+    simulator.initSimulation();
     
     render();
 });
