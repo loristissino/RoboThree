@@ -15,6 +15,10 @@ Simulated robots can have virtual devices (like onboard cameras, a compass, etc.
 
 Info on the [wiki page](https://github.com/loristissino/RoboThree/wiki/Setup).
 
+## Classes and function
+
+Documentation about classes and functions is available in [the pages generated from source code comments](http://loristissino.github.io/RoboThree/index.html), thanks to [JSdoc](https://github.com/jsdoc3/jsdoc).
+
 ## Credits
 
 Libraries:
