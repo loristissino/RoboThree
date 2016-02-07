@@ -1,7 +1,5 @@
 /**
- * @author Loris Tissino / http://loris.tissino.it
- * @package RoboThree
- * @release 0.61
+ * @release 0.70
  * @license The MIT License (MIT)
 */
 
@@ -13,13 +11,13 @@ var ThreeWheelDistanceSensingRobotVirtualizer = require('../virtualizers/ThreeWh
 
 extend ( ThreeWheelDistanceSensingRobotBehavior.prototype, ThreeWheelDistanceSensingRobotVirtualizer.prototype );
 
-extend ( global, require('EspruinoSimulator') );
+extend ( global, require('EspruinoEmulationLayer') );
 
 'use strict';
 
 var port = process.argv[2] || 9080;
 
-var roboThreeRelease = '0.61';
+var roboThreeRelease = '0.70';
 var managerName = "Simple Robots' manager";
 
 var robots = {

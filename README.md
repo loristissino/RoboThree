@@ -73,3 +73,5 @@ more realistic (and more complex) you could try:
 * Release 0.60 (February 3rd, 2016): added buzzer and some enhacements
 
 * Release 0.61 (February 6th, 2016): minor code enhancements
+
+* Release 0.70 (February 7th, 2016): added jsdoc comments to source code; renamed a file

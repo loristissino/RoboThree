@@ -1,17 +1,22 @@
-/**
- * @author Loris Tissino / http://loris.tissino.it
- * @package RoboThree
- * @release 0.60
- * @license The MIT License (MIT)
-*/
-
 'use strict';
 
+/**
+ * @classdesc Class representing a three-wheeled distance-sensing robot's representation.
+ * @constructor
+ * @author Loris Tissino (http://loris.tissino.it)
+ * @release 0.70
+ * @license MIT
+ * @extends RobotRepresentation
+ */
 var ThreeWheelDistanceSensingRobotRepresentation = function () {
 };
 
-$.extend ( ThreeWheelDistanceSensingRobotRepresentation.prototype, BasicRobot.prototype );
+$.extend ( ThreeWheelDistanceSensingRobotRepresentation.prototype, RobotRepresentation.prototype );
 
+/**
+ * Builds the robot's representation.
+ * @returns {boolean} - Whether the robot's representation could be built
+ */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.build = function build () {
     
     if ( !this.isBuilt ) {
@@ -39,6 +44,10 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.build = function build ()
     }
 }
 
+/**
+ * Adds the body of the robot to the scene
+ * @returns {ThreeWheelDistanceSensingRobotRepresentation} - The robot
+ */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.addBody = function addBody () {
     
     var values = $.extend ( {
@@ -177,6 +186,10 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addBody = function addBod
     return this;
 }
 
+/**
+ * Adds the driving wheels of the robot to the scene.
+ * @returns {ThreeWheelDistanceSensingRobotRepresentation} - The robot
+ */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.addWheels = function addWheels () {
     
     var color = 0xD9D900;
@@ -268,6 +281,10 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addArm = function addArm 
 
 }
 
+/**
+ * Adds the front (not driving) wheel of the robot to the scene.
+ * @returns {ThreeWheelDistanceSensingRobotRepresentation} - The robot
+ */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.addFrontWheel = function addFrontWheel () {
 
     this.frontWheel = new Physijs.BoxMesh(
@@ -298,7 +315,10 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addFrontWheel = function 
     return this;
 }
 
-
+/**
+ * Adds the sonars of the robot to the scene and registers their process function.
+ * @returns {ThreeWheelDistanceSensingRobotRepresentation} - The robot
+ */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.addSonars = function addSonars () {
 
     this.frontSonarReference = new THREE.Object3D();
@@ -442,11 +462,19 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addSonars = function addS
     return this;
 }
 
+/**
+ * Finalizes the body of the robot. After calling this function, no other object can be added to the chassis.
+ * @returns {ThreeWheelDistanceSensingRobotRepresentation} - The robot
+ */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.finalizeBody = function finalizeBody () {
     this.scene.add ( this.chassis );
     return this;
 }
 
+/**
+ * Adds the buzzer and registers its process function.
+ * @returns {ThreeWheelDistanceSensingRobotRepresentation} - The robot
+ */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.addBuzzer = function addBuzzer () {
     // see https://developer.mozilla.org/en/docs/Web/API/AudioContext
     // see http://chimera.labs.oreilly.com/books/1234000001552/ch01.html
@@ -479,6 +507,10 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addBuzzer = function addB
     return this;
 };
 
+/**
+ * Adds the virtual camera and registers its process function.
+ * @returns {ThreeWheelDistanceSensingRobotRepresentation} - The robot
+ */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualCamera = function addVirtualCamera () {
 
     this.camera = new THREE.PerspectiveCamera(
@@ -524,6 +556,10 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualCamera = functi
     return this;
 }
 
+/**
+ * Adds the virtual locator and registers its process function.
+ * @returns {ThreeWheelDistanceSensingRobotRepresentation} - The robot
+ */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualLocator = function addVirtualLocator () {
     var robot = this;
     this.registeredProcessFunctions.push ( function () {
@@ -534,6 +570,10 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualLocator = funct
     return this;
 }
 
+/**
+ * Adds the virtual compass and registers its process function.
+ * @returns {ThreeWheelDistanceSensingRobotRepresentation} - The robot
+ */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualCompass = function addVirtualCompass () {
     var robot = this;
     this.registeredProcessFunctions.push ( function ( ) {
@@ -546,6 +586,10 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualCompass = funct
     return this;
 }
 
+/**
+ * Adds the virtual scanner and registers its process function.
+ * @returns {ThreeWheelDistanceSensingRobotRepresentation} - The robot
+ */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualScanner = function addVirtualScanner ( ) {
     var robot = this;
     this.registeredProcessFunctions.push ( function ( ) {
@@ -559,6 +603,10 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualScanner = funct
     return this;
 }
 
+/**
+ * Adds the virtual pen and registers its process function.
+ * @returns {ThreeWheelDistanceSensingRobotRepresentation} - The robot
+ */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualPen = function addVirtualPen ( color ) {
     var robot = this;
     this.pen = {
@@ -596,6 +644,10 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addVirtualPen = function 
     return this;
 }
 
+/**
+ * Processes incoming data and prepares outgoing data.
+ * @returns {ThreeWheelDistanceSensingRobotRepresentation} - The robot
+ */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.process = function process ( ) {
     
     var p;
@@ -628,6 +680,11 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.process = function proces
     return this;
 }
 
+/**
+ * Updates the data to/from the robot's behavior.
+ * @override
+ * @param {Object} data - The data received/transmitted
+ */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.update = function update ( data ) {
     
     if (!this.isBuilt) {
@@ -653,6 +710,11 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.update = function update 
     return this.data;
 }
 
+/**
+ * Manages the fact that there has been a communication failure.
+ * @override
+ * @param {Object} data - The data received/transmitted
+ */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.manageCommunicationFailure = function manageCommunicationFailure () {
     if ( this.isBuilt ) {
         this.batterypack.material.color.setHex( this.robotsManager.values.failureColor );

@@ -1,15 +1,20 @@
-/**
- * @author Loris Tissino / http://loris.tissino.it
- * @package RoboThree
- * @release 0.61
- * @license The MIT License (MIT)
-*/
-
 'use strict';
 
-var BasicRobot = function () {}
+/**
+ * @classdesc Class representing a basic robot's representation.
+ * @author Loris Tissino (http://loris.tissino.it)
+ * @release 0.70
+ * @license MIT
+ * @constructor
+ */
+var RobotRepresentation = function () {}
 
-BasicRobot.prototype.setId = function setId ( id ) {
+/**
+ * Sets the id of the robot and prepares the containers it needs.
+ * @param {string} id - The id of the robot
+ * @return {RobotRepresentation} - The robot
+*/
+RobotRepresentation.prototype.setId = function setId ( id ) {
     this.id = id;
     this.isBuilt = false;
     this.components = [];  // we keep track of components with constraints here, because we need to move the separetely
@@ -20,35 +25,67 @@ BasicRobot.prototype.setId = function setId ( id ) {
     return this;
 }
 
-BasicRobot.prototype.setInitialValues = function setInitialValues ( values ) {
+/**
+ * Sets the initialValues of the robot.
+ * @param {Object} values - The values
+ * @return {RobotRepresentation} - The robot
+*/
+RobotRepresentation.prototype.setInitialValues = function setInitialValues ( values ) {
     this.initialValues = values;
     return this;
 }
 
-BasicRobot.prototype.setRobotManager = function setRobotsManager ( robotsManager ) {
+/**
+ * Sets the robot's manager.
+ * @param {RobotsManager} robotsManager - The Robots' Manager to set
+ * @return {RobotRepresentation} - The robot
+*/
+RobotRepresentation.prototype.setRobotManager = function setRobotsManager ( robotsManager ) {
     this.robotsManager = robotsManager;
     this.scene = this.robotsManager.simulator.scene; // a shortcut reference
     return this;
 }
 
-BasicRobot.prototype.setControllerUrl = function setControllerUrl ( url ) {
+/**
+ * Sets the url for the simulated remote control or similar device.
+ * @param {string} url - The URL
+ * @return {RobotRepresentation} - The robot
+*/
+RobotRepresentation.prototype.setControllerUrl = function setControllerUrl ( url ) {
     this.controllerUrl = url;
     return this;
 }
 
-BasicRobot.prototype.hasController = function hasController () {
+/**
+ * Returns true if the robot has been assigned a remote control.
+ * @return {boolean} - Whether the robot has been assigned a remote control
+*/
+RobotRepresentation.prototype.hasController = function hasController () {
     return typeof this.controllerUrl !== 'undefined';
 }
 
-BasicRobot.prototype.hasCamera = function hasCamera () {
+/**
+ * Returns true if the robot has available a (virtual) camera.
+ * @return {boolean} - Whether the robot has been assigned a remote control
+*/
+RobotRepresentation.prototype.hasCamera = function hasCamera () {
     return typeof this.camera !== 'undefined';
 }
 
-BasicRobot.prototype.show = function show () {
+/**
+ * Writes information about the robot on the console.
+ * @return {RobotRepresentation} - The robot
+*/
+RobotRepresentation.prototype.show = function show () {
     console.log ( "I am a robot, id: " + this.id );
+    return this;
 }
 
-BasicRobot.prototype.getLambertPjsMaterial = function getMaterial ( options ) {
+/**
+ * Returns a Physijs Material based on a THREE.MeshLambertMaterial.
+ * @return {object} - The material created
+*/
+RobotRepresentation.prototype.getLambertPjsMaterial = function getMaterial ( options ) {
 
     var values = $.extend ({
         color: 0xC1F5F6,
@@ -65,7 +102,12 @@ BasicRobot.prototype.getLambertPjsMaterial = function getMaterial ( options ) {
     );
 }
 
-BasicRobot.prototype.createWheel = function createWheel ( options ) {
+/**
+ * Returns a Physijs CylinderMesh representing a wheel.
+ * @param {Object} options - The options
+ * @return {Physijs.CylinderMesh} - The wheel created
+*/
+RobotRepresentation.prototype.createWheel = function createWheel ( options ) {
     // position, radius, thickness, mass
 
     var values = $.extend ({
@@ -96,38 +138,80 @@ BasicRobot.prototype.createWheel = function createWheel ( options ) {
     return wheel;
 }
 
-BasicRobot.prototype.updateWheelSpeed = function updateWheelSpeed ( wheel, speed ) {
+/**
+ * Updates the speed of a wheel.
+ * @param {Object} wheel - The wheel to update
+ * @param {float} speed - The speed to set
+ * @return {RobotRepresentation} - The robot
+*/
+RobotRepresentation.prototype.updateWheelSpeed = function updateWheelSpeed ( wheel, speed ) {
     if ( typeof speed !== 'undefined' ) {
         this[wheel + 'WheelConstraint'].configureAngularMotor(2, 0.1, 0, 5*speed, 15000);
     }
+    return this;
 }
 
-BasicRobot.prototype.createDOFConstraint = function createDOFConstraint ( mainObject, constrainedObject, position ) {
+/**
+ * Returns a Physijs DOF Constraint.
+ * @param {Object} mainObject - First object to be constrained
+ * @param {Object} constrainedObject - Second object to be constrained
+ * @param {THREE.Vector3} position - Point in the scene to apply the constraint
+ * @return {Physijs.DOFConstraint} - The constraint created
+*/
+RobotRepresentation.prototype.createDOFConstraint = function createDOFConstraint ( mainObject, constrainedObject, position ) {
     return new Physijs.DOFConstraint( mainObject, constrainedObject, position );
 }
 
-BasicRobot.prototype.createHingeConstraint = function createHingeConstraint ( mainObject, constrainedObject, position, axis ) {
+/**
+ * Returns a Physijs Hinge Constraint.
+ * @param {Object} mainObject - First object to be constrained
+ * @param {Object} constrainedObject - Second object to be constrained
+ * @param {THREE.Vector3} position - Point in the scene to apply the constraint
+ * @param {THREE.Vector3} axis - Axis along which the hinge lies
+ * @return {Physijs.DOFConstraint} - The constraint created
+*/
+RobotRepresentation.prototype.createHingeConstraint = function createHingeConstraint ( mainObject, constrainedObject, position, axis ) {
     return new Physijs.HingeConstraint(
-        mainObject, // First object to be constrained
-        constrainedObject, // OPTIONAL second object - if omitted then physijs_mesh_1 will be constrained to the scene
-        position, // point in the scene to apply the constraint
-        axis // Axis along which the hinge lies - in this case it is the X axis
+        mainObject,
+        constrainedObject, 
+        position, 
+        axis 
     );
 }
 
-BasicRobot.prototype.build = function build () {
+/**
+ * Builds the robot's representation.
+ * @abstract
+ * @returns {boolean} - Whether the robot's representation could be built
+ */
+RobotRepresentation.prototype.build = function build () {
     throw "Error: this should be implemented in the actual robot class";
 }
 
-BasicRobot.prototype.update = function update ( data ) {
+/**
+ * Updates the data to/from the robot's behavior.
+ * @abstract
+ * @param {Object} data - The data received/transmitted
+ */
+RobotRepresentation.prototype.update = function update ( data ) {
     throw "Error: this should be implemented in the actual robot class";
 }
 
-BasicRobot.prototype.manageCommunicationFailure = function manageCommunicationFailure () {
+/**
+ * Manages the fact that there has been a communication failure.
+ * @abstract
+ */
+RobotRepresentation.prototype.manageCommunicationFailure = function manageCommunicationFailure () {
     throw "Error: this should be implemented in the actual robot class";
 }
 
-BasicRobot.prototype.move = function move ( vector, relative ) {
+/**
+ * Moves the robot to a specific place.
+ * @param {THREE.Vector3} vector - The vector with the coordinates to move the robot to
+ * @param {boolean} relative - Whether the coordinates are to be considered relative or absolute
+ * @return {RobotRepresentation} - The robot
+ */
+RobotRepresentation.prototype.move = function move ( vector, relative ) {
     // vector is a THREE.Vector3 object
     // relative is a boolean: if true, the vector is considered a change from current position, else a final destination
     console.log ('moving to: ');
@@ -153,18 +237,37 @@ BasicRobot.prototype.move = function move ( vector, relative ) {
     return this;
 }
 
-BasicRobot.prototype.rotateOnAxis = function rotateOnAxis ( axis, angle ) {
+/**
+ * Rotates the robot on an axis.
+ * @param {THREE.Vector3} axis - The axis along which the robot should be rotated
+ * @param {float} angle - The angle of rotation, in radians
+ * @return {RobotRepresentation} - The robot
+ */
+RobotRepresentation.prototype.rotateOnAxis = function rotateOnAxis ( axis, angle ) {
     this.chassis.rotateOnAxis ( axis, angle );
     this.chassis.__dirtyPosition = true;
     this.chassis.__dirtyRotation = true;
     return this;
 }
 
-BasicRobot.prototype.getAngle = function getAngle ( pos1, pos2, axes ) {
+/**
+ * Returns the angle on a plain between two points.
+ * @param {THREE.Vector3} pos1 - The first point
+ * @param {THREE.Vector3} pos2 - The second point
+ * @param {array} axes - An array of two chars, each representing an axis to be considered for the definition of the plane
+ * @return {float} - The angle in radians
+ */
+RobotRepresentation.prototype.getAngle = function getAngle ( pos1, pos2, axes ) {
     return Math.PI + Math.atan2 ( pos1[axes[0]] - pos2[axes[0]], pos1[axes[1]] - pos2[axes[1]] );
 }
 
-BasicRobot.prototype.getAbsolutePositionForObject = function getAbsolutePositionForObject( obj, forceUpdate ) {
+/**
+ * Returns the absolute position of an object.
+ * @param {Object} obj - The object
+ * @param {boolean} forceUpdate - Whether the cached value should be used
+ * @return {THREE.Vector3} - The position
+ */
+RobotRepresentation.prototype.getAbsolutePositionForObject = function getAbsolutePositionForObject( obj, forceUpdate ) {
     if ( typeof obj.userData.absolutePosition === 'undefined' ) {
         obj.userData.absolutePosition = new THREE.Vector3();
     }
@@ -177,7 +280,13 @@ BasicRobot.prototype.getAbsolutePositionForObject = function getAbsolutePosition
     return obj.userData.absolutePosition;
 }
 
-BasicRobot.prototype.getBottomImagePixelCoordinatesForObject = function getBottomImagePixelCoordinatesForObject( obj, forceUpdate ) {
+/**
+ * Returns the coordinates of an object mapped on the pixels of the bottom image.
+ * @param {Object} obj - The object
+ * @param {boolean} forceUpdate - Whether the cached value should be used
+ * @return {THREE.Vector2} - The coordinates
+ */
+RobotRepresentation.prototype.getBottomImagePixelCoordinatesForObject = function getBottomImagePixelCoordinatesForObject( obj, forceUpdate ) {
     var coords = this.getAbsolutePositionForObject( obj, forceUpdate );
     return new THREE.Vector2 (
         Math.round( THREE.Math.mapLinear (
@@ -197,6 +306,15 @@ BasicRobot.prototype.getBottomImagePixelCoordinatesForObject = function getBotto
     );
 }
 
+/**
+ * Represents a Robots' Manager (seen from the client side).
+ * @author Loris Tissino (http://loris.tissino.it)
+ * @release 0.70
+ * @license MIT
+ * @constructor
+ * @param {Object} values
+ * @param {Simulator} simulator - The simulator that uses this robots' manager
+ */
 var RobotsManager = function ( values, simulator ) {
     console.log(values);
     this.values = values;
@@ -206,6 +324,11 @@ var RobotsManager = function ( values, simulator ) {
     this.data = {};
 };
 
+/**
+ * Adds a robot to the list of managed robots, after having loaded it's representation source file.
+ * @param {Object} robot - An object containing the information about the robot to add
+ * @return {RobotsManager} - The robots' manager
+ */
 RobotsManager.prototype.addRobot = function ( robot ) {
     console.log ( 'adding robot ' + robot.id );
     console.log ( robot.class );
@@ -240,6 +363,10 @@ RobotsManager.prototype.addRobot = function ( robot ) {
     });
 }
 
+/**
+ * Adds all the robots (from the initial setup) to the list of managed robots.
+ * @return {RobotsManager} - The robots' manager
+ */
 RobotsManager.prototype.addRobots = function () {
     console.log("robots to add:");
     console.log(this.values.robots);
@@ -250,6 +377,10 @@ RobotsManager.prototype.addRobots = function () {
     return this;
 }
 
+/**
+ * Makes a POST to the Robots' Manager (server side) to update the data.
+ * @return {RobotsManager} - The robots' manager
+ */
 RobotsManager.prototype.update = function () {
     var robots = this.robots; // a reference
     var rm = this; // a reference
@@ -274,11 +405,20 @@ RobotsManager.prototype.update = function () {
     .always(function() {
        //alert( "finished" );
     });
+    return this;
 }
 
+/**
+ * Represents a Simulator.
+ * @constructor
+ * @author Loris Tissino (http://loris.tissino.it)
+ * @release 0.70
+ * @license MIT
+ * @param {Object} defaults - The default values to be used during setup
+ */
 var Simulator = function ( defaults ) {
     
-    this.release = '0.61';
+    this.release = '0.70';
     
     this.defaults = defaults;
 
@@ -286,6 +426,11 @@ var Simulator = function ( defaults ) {
     
     this.loader = new THREE.TextureLoader();
 
+    /**
+     * Initializes the main renderer.
+     * @param {Object} options - The options to be used during initialization
+     * @return {Simulator} The Simulator
+     */
     this.initRenderer = function initRenderer ( options ) {
         var values = $.extend ( {}, this.defaults.renderer, options );
         this.renderer = new THREE.WebGLRenderer( {antialias: values.antialias, preserveDrawingBuffer: true, alpha: true } );
@@ -296,6 +441,10 @@ var Simulator = function ( defaults ) {
         return this;
     };
 
+    /**
+     * Initializes the alternate renderer.
+     * @return {Simulator} The Simulator
+     */
     this.initAltRenderer = function initAltRenderer () {
         this.altRenderer = new THREE.WebGLRenderer( {antialias: false, preserveDrawingBuffer: true, alpha: false } );
         this.altRenderer.setSize(160, Math.round( 160 * this.renderer.getSize().height / this.renderer.getSize().width ));
@@ -312,6 +461,10 @@ var Simulator = function ( defaults ) {
         return this;
     };
 
+    /**
+     * Initializes the Stats information block.
+     * @return {Simulator} The Simulator
+     */
     this.initRenderStats = function initRenderStats () {
         this.renderStats = new Stats();
         this.renderStats.setMode( this.defaults.stats.mode ); 
@@ -323,6 +476,10 @@ var Simulator = function ( defaults ) {
         return this;
     };
     
+    /**
+     * Adds the InfoBox.
+     * @return {Simulator} The Simulator
+     */
     this.addInfoBox = function addInfoBox() {
         this.infoBox = $( '<div />' );
         this.infoBox
@@ -353,12 +510,19 @@ var Simulator = function ( defaults ) {
         this.debugBoxTexts = {};
     }
     
+    /**
+     * Loops on the robots' managers, calling the update() method for each of them.
+     */
     this.onUpdate = function onUpdate() {
         $.each ( this.robotsManagers, function ( id, robotManager ) {
             robotManager.update();
         });
     }
 
+    /**
+     * Initializes the scene.
+     * @return {Simulator} The Simulator
+     */
     this.initScene = function initScene ( options ) {
 
         var values = $.extend ( {}, this.defaults.scene, options );
@@ -369,6 +533,11 @@ var Simulator = function ( defaults ) {
         return this;
     };
 
+    /**
+     * Adds the main camera.
+     * @param {Object} options - The options to be used during initialization
+     * @return {Simulator} The Simulator
+     */
     this.addMainCamera = function addMainCamera ( options ) {
 
         var values = $.extend ( {}, this.defaults.mainCamera, options );
@@ -386,6 +555,11 @@ var Simulator = function ( defaults ) {
         return this;
     };
 
+    /**
+     * Adds the main light.
+     * @param {Object} options - The options to be used during initialization
+     * @return {Simulator} The Simulator
+     */
     this.addLight = function addLight ( options ) {
         
         var values = $.extend ( {}, this.defaults.light, options );
@@ -400,6 +574,11 @@ var Simulator = function ( defaults ) {
         return this;
     };
 
+    /**
+     * Adds the axis helper.
+     * @param {Object} options - The options to be used during initialization
+     * @return {Simulator} The Simulator
+     */
     this.addAxisHelper = function addAxisHelper ( options ) {
         
         var values = $.extend ( {}, this.defaults.axisHelper, options );
@@ -410,13 +589,20 @@ var Simulator = function ( defaults ) {
         return this;
     };
 
+    /**
+     * Adds the graphical user interface.
+     * @return {Simulator} The Simulator
+     */
     this.addGUI = function addGUI () {
-        
         this.gui = guiFactory ( this );
         return this;
-        
     };
     
+    /**
+     * Adds the ground.
+     * @param {Object} options - The options to be used during initialization
+     * @return {Simulator} The Simulator
+     */
     this.addGround = function addGround ( options ) {
 
         var values = $.extend ( {}, this.defaults.ground, options );
@@ -503,6 +689,11 @@ var Simulator = function ( defaults ) {
         return this;
     }
     
+    /**
+     * Adds the robots' managers.
+     * @param {Object} options - The options to be used during initialization
+     * @return {Simulator} The Simulator
+     */
     this.addRobotsManagers = function addRobotsManagers( options ) {
         
         var values = $.extend ( {}, this.defaults.robotsManagers, options );
@@ -518,6 +709,9 @@ var Simulator = function ( defaults ) {
         return this;
     }
     
+    /**
+     * Initializes the whole simulation.
+     */
     this.initSimulation = function() {
         this
             .initRenderer()
@@ -551,8 +745,6 @@ var Simulator = function ( defaults ) {
     
 };
 
-
-
 $(function () {
 
     function render () {
@@ -563,7 +755,7 @@ $(function () {
         requestAnimationFrame ( render );
         simulator.renderer.render ( simulator.scene, simulator.usedCamera );
         if ( simulator.gui.userData.controls.enableAltCamera && simulator.usedCamera.name !== 'main' ) {
-            simulator.altRenderer.render ( simulationManager.scene, simulator.mainCamera );
+            simulator.altRenderer.render ( simulator.scene, simulator.mainCamera );
             simulator.altRenderer.domElement.style.visibility = 'visible';
         }
         else {

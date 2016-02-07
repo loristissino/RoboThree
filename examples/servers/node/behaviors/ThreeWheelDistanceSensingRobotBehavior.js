@@ -1,14 +1,14 @@
-/**
- * @author Loris Tissino / http://loris.tissino.it
- * @package RoboThree
- * @release 0.61
- * @license The MIT License (MIT)
- * @see http://www.espruino.com/Reference
-*/
-
 var hcsr04 = require("HC-SR04");
 var ir = require("IRReceiver");
 
+/**
+ * @classdesc Class representing an infrared receiver.
+ * @author Loris Tissino (http://loris.tissino.it)
+ * @release 0.70
+ * @license MIT
+ * @constructor
+ * @mixes ThreeWheelDistanceSensingRobotVirtualizer
+ */
 var IRR = function ( pin, codesMap, leftSubtract ) {
     this.codesMap = codesMap;
     this.pin = pin;
@@ -19,6 +19,10 @@ var IRR = function ( pin, codesMap, leftSubtract ) {
     var self = this;
 };
 
+/**
+ * Enables the infrared receiver.
+ * @param {function} callback - The function to execute with the received code
+*/
 IRR.prototype.enable = function ( callback ) {
     var self = this;
     this.callback = callback;
@@ -44,6 +48,15 @@ IRR.prototype.enable = function ( callback ) {
 	}, 200);
 };
 
+/**
+ * @classdesc Class representing a sonar.
+ * @author Loris Tissino (http://loris.tissino.it)
+ * @release 0.70
+ * @license MIT
+ * @param {Pin} triggerPin - The pin used to trigger the sonar
+ * @param {Pin} echoPin - The pin used to check the echo
+ * @constructor
+ */
 var Sonar = function ( triggerPin, echoPin, frequency ) {
     this.triggerPin = triggerPin;
     this.echoPin = echoPin;
@@ -52,6 +65,9 @@ var Sonar = function ( triggerPin, echoPin, frequency ) {
     this.interval = false;
 };
 
+/**
+ * Enables the sonar.
+*/
 Sonar.prototype.enable = function () {
     var sonar = this;
     this.connection = hcsr04.connect ( this.triggerPin, this.echoPin, function ( dist ) {
@@ -62,6 +78,9 @@ Sonar.prototype.enable = function () {
     }, this.frequency ); 
 };
 
+/**
+ * Disables the sonar.
+*/
 Sonar.prototype.disable = function () {
     if ( this.interval !== false ) {
         clearInterval( this.interval );
@@ -70,41 +89,81 @@ Sonar.prototype.disable = function () {
     this.interval = false;
 };
 
+/**
+ * @classdesc Class representing a driving wheel.
+ * @author Loris Tissino (http://loris.tissino.it)
+ * @release 0.70
+ * @license MIT
+ * @param {Pin} enablePin - The pin used to enable the motor of the wheel
+ * @param {array} controlPins - An array of two Pins used to control the wheel
+ * @param {float} calibrationFactor - A value which is multiplied by speed before applying
+ * @constructor
+ */
 var Wheel = function ( enablePin, controlPins, calibrationFactor) {
     this.enablePin = enablePin;
     this.controlPins = controlPins;
-    this.calibrationFactor = calibrationFactor; // a value which is multiplied by speed before applying
+    this.calibrationFactor = calibrationFactor;
     this.setSpeed(0);
 };
 
-// speed is assumed to be a number between 0.0 and 1.0
+/**
+ * Sets the speed of the wheel
+ * @param {float} speed - The speed to set (between 0.0 and 1.0)
+ */
 Wheel.prototype.setSpeed = function ( speed ) {
     this._speed = speed;
     analogWrite( this.enablePin, this._speed * this.calibrationFactor, { freq: 100 } );
     return this;
 };
 
+/**
+ * Returns the speed set for the wheel
+ * @return {float} The value set as current speed
+ */
 Wheel.prototype.getSpeed = function () {
     return this._speed;
 };
 
+/**
+ * Write values to control pins
+ * @param {int} v0 - Value to write to controlPin[0]
+ * @param {int} v1 - Value to write to controlPin[1]
+ */
 Wheel.prototype.writeToControlPins = function (v0, v1) {
     this.controlPins[0].write(v0);
     this.controlPins[1].write(v1);
 };
 
+/**
+ * Sets the wheel to go forward
+ */
 Wheel.prototype.forward = function () {
     this.writeToControlPins( 0, 1 );
 };
 
+/**
+ * Sets the wheel to go backward
+ */
 Wheel.prototype.backward = function () {
     this.writeToControlPins( 1, 0 );
 };
 
+/**
+ * Sets the wheel to stopped
+ */
 Wheel.prototype.stop = function () {
     this.writeToControlPins( 0, 0 );
 };
 
+/**
+ * @classdesc Class representing a LED.
+ * @author Loris Tissino (http://loris.tissino.it)
+ * @release 0.70
+ * @license MIT
+ * @param {Pin} pin - The pin associated with the LED
+ * @param {int} blinkingTime - Milliseconds between on/off operations
+ * @constructor
+ */
 var Led = function ( pin, blinkingTime ) {
     this.pin = pin;
     this.blinkingTime = blinkingTime;
@@ -113,10 +172,16 @@ var Led = function ( pin, blinkingTime ) {
     this.interval = false;
 };
 
+/**
+ * Toggles the LED.
+ */
 Led.prototype.toggle = function () {
     this.pin.write( this.status = 1 - this.status );
 };
 
+/**
+ * Clears the interval associated to the LED.
+ */
 Led.prototype.clearInterval = function () {
     console.log ( this );
     if ( this.interval !== false ) {
@@ -125,16 +190,32 @@ Led.prototype.clearInterval = function () {
     this.interval = false;
 };
 
+/**
+ * Switches the LED on.
+ */
 Led.prototype.switchOn = function () {
     this.pin.write( this.status = 1 );
     this.clearInterval();
 };
 
+/**
+ * Switches the LED off.
+ */
 Led.prototype.switchOff = function () {
     this.pin.write( this.status = 0 );
     this.clearInterval();
 };
 
+/**
+ * @classdesc Class representing a buzzer.
+ * @author Loris Tissino (http://loris.tissino.it)
+ * @release 0.70
+ * @license MIT
+ * @param {Pin} pin - The pin associated with the buzzer
+ * @param {float} frequency - The default frequency
+ * @param {float} duration - The default duration (milliseconds)
+ * @constructor
+ */
 var Buzzer = function ( pin, frequency, duration ) {
     this.pin = pin;
     this.defaultFrequency = frequency;
@@ -142,6 +223,11 @@ var Buzzer = function ( pin, frequency, duration ) {
     this.status = 0;  // 0: off;  1: beeping;  2: replicated
 };
 
+/**
+ * Beeps.
+ * @param {float} frequency - The frequency
+ * @param {float} duration - The duration (milliseconds)
+ */
 Buzzer.prototype.beep = function ( frequency, duration ) {
     var self = this;
     this.frequency = frequency || this.defaultFrequency;
@@ -156,6 +242,14 @@ Buzzer.prototype.beep = function ( frequency, duration ) {
     }
 };
 
+/**
+ * @classdesc Class representing a robot's behavior.
+ * @author Loris Tissino (http://loris.tissino.it)
+ * @release 0.70
+ * @license MIT
+ * @param {string} id - The id of the robot
+ * @constructor
+ */
 var ThreeWheelDistanceSensingRobotBehavior = function ( id ) {
     this.id = id;
     this.data = {};
@@ -163,6 +257,11 @@ var ThreeWheelDistanceSensingRobotBehavior = function ( id ) {
     this.playing = false;
 };
 
+/**
+ * Configures the robot.
+ * @param {Object} options - The configuration settings (currently unused)
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.setup = function ( options ) {
     this.infraredReader = new IRR ( B3, {
             '16605343': { exec: 'moveForward', repeatOnKeptPressed: true },
@@ -206,11 +305,18 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.setup = function ( options ) {
     return this;
 };
 
+/**
+ * Enables the infrared reader.
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.enableInfraredReader = function () {
     this.infraredReader.enable ( this.handleInfraredReaderCode.bind(this) );
     return this;
 };
 
+/**
+ * Handles the code read by the infrared reader.
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.handleInfraredReaderCode = function () {
     if ( typeof this.infraredReader.code === 'undefined') {
         return;
@@ -226,47 +332,77 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.handleInfraredReaderCode = func
     }
 };
 
+/**
+ * Activates the wheels to move forward.
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.moveForward = function () {
     this.leftWheel.forward();
     this.rightWheel.forward();
 };
 
+/**
+ * Activates the wheels to move backward.
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.moveBackward = function () {
     this.leftWheel.backward();
     this.rightWheel.backward();
 };
 
+/**
+ * Activates the wheels to turn left.
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.turnLeft = function () {
     this.leftWheel.backward();
     this.rightWheel.forward();
 };
 
+/**
+ * Activates the wheels to turn right.
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.turnRight = function () {
     this.leftWheel.forward();
     this.rightWheel.backward();
 };
 
+/**
+ * Activates the left wheel to move forward.
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.leftForward = function () {
     this.leftWheel.forward();
 };
 
+/**
+ * Activates the left wheel to move backward.
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.leftBackward = function () {
     this.leftWheel.backward();
 };
 
+/**
+ * Activates the right wheel to move forward.
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.rightForward = function () {
     this.rightWheel.forward();
 };
 
+/**
+ * Activates the right wheel to move backward.
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.rightBackward = function () {
     this.rightWheel.backward();
 };
 
+/**
+ * Stops both wheels.
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.stop = function stop () {
     this.leftWheel.stop();
     this.rightWheel.stop();
 };
 
+/**
+ * Makes a backup maneuvre: backward, turn, forward again.
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.backup = function () {
     this.inManeuver = true;
     this.beep();
@@ -282,6 +418,11 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.backup = function () {
     }, 2000);
 };
 
+/**
+ * Sets the speed of the wheels.
+ * @param {float} speed - The speed (between 0.0 and 1.0, otherwise clipped)
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.setSpeed = function ( speed ) {
     this.speed = E.clip ( speed, 0.0, 1.0 );
     this.leftWheel.setSpeed(this.speed);
@@ -289,14 +430,27 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.setSpeed = function ( speed ) {
     return this;
 };
 
+/**
+ * Decreases speed of 0.05.
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.decreaseSpeed = function ( ) {
     return this.setSpeed ( this.speed - 0.05 );
 };
 
+/**
+ * Increases speed of 0.05.
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.increaseSpeed = function ( ) {
     return this.setSpeed ( this.speed + 0.05 );
 };
 
+/**
+ * Toggles LED's blinking.
+ * @param {string} led - The code associated to the LED
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.toggleLedBlinking = function ( led ) {
     var robot = this;
     if ( this.leds[led].interval === false ) {
@@ -311,18 +465,34 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.toggleLedBlinking = function ( 
     return this;
 };
 
+/**
+ * Toggles LED1's blinking.
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.toggleLedBlinking1 = function ( ) {
     return this.toggleLedBlinking( '1' );
 };
 
+/**
+ * Toggles LED2's blinking.
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.toggleLedBlinking2 = function ( ) {
     return this.toggleLedBlinking( '2' );
 };
 
+/**
+ * Toggles LED3's blinking.
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.toggleLedBlinking3 = function ( ) {
     return this.toggleLedBlinking( '3' );
 };
 
+/**
+ * Enables all the sonars.
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.enableSonars = function ( ) {
     for ( var key in this.sonars ) {
         this.sonars[key].enable();
@@ -330,11 +500,19 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.enableSonars = function ( ) {
     return this;
 };
 
+/**
+ * Makes the buzzer beep.
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.beep = function ( ) {
     this.buzzer.beep();
     return this;
 };
 
+/**
+ * Makes the robot play.
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.play = function () {
     var self = this;
     this.inManeuver = false;
@@ -349,6 +527,10 @@ ThreeWheelDistanceSensingRobotBehavior.prototype.play = function () {
     return this;
 };
 
+/**
+ * Makes the robot pause.
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotBehavior.prototype.pause = function () {
     this.stop();
     if ( this.playing ) {

@@ -1,15 +1,20 @@
-/**
- * @author Loris Tissino / http://loris.tissino.it
- * @package RoboThree
- * @release 0.50
- * @license The MIT License (MIT)
-*/
-
 var extend = require('extend');
 
+/**
+ * @classdesc Mixin providing methods for the virtualization of a robot's behavior.
+ * @mixin
+ * @author Loris Tissino (http://loris.tissino.it)
+ * @release 0.70
+ * @license MIT
+ * @constructor
+ */
 var ThreeWheelDistanceSensingRobotVirtualizer = function ( ) {
 };
 
+/**
+ * Creates the pins needed.
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.createPins = function createPins () {
     var availablePins = ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B12', 'C12', 'C15', 'C0', 'C1', 'C2', 'C3', 'A0', 'A1', '3.3', 'A15', 'A14', 'A13', 'A10', 'A9', 'A8', 'C11', 'C10', 'C9', 'C8', 'C7', 'C6', 'C5', 'C4', 'B15', 'B14', 'B13', '3.3', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'B0', 'B1', 'B10', 'B11', 'A11', 'A12', 'C13', 'C14', 'D0', 'D1', 'D2'];
     var aliases = [
@@ -32,27 +37,49 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.createPins = function create
     return this;
 }
 
+/**
+ * Enables the infrared reader.
+ * @override
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.enableInfraredReader = function enableInfraredReader () {
     this.infraredReader.code = -1;
     this.registeredCallBacks.infraredReader = this.handleInfraredReaderCode.bind(this);
     return this;
 }
 
+/**
+ * Disables the infrared reader.
+ * @override
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.disableInfraredReader = function disableInfraredReader () {
     delete this.registeredCallBacks.infraredReader;
     return this;
 }
 
+/**
+ * Adds a virtual pen.
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.addVirtualPen = function addVirtualPen () {
     this.infraredReader.codesMap['16619623'] = 'togglePen';
     this.pen = { enabled: false };
     return this;
 }
 
+/**
+ * Toggles the virtual pen.
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.togglePen = function () {
     this.pen.enabled = !this.pen.enabled;
 }
 
+/**
+ * Adds commands.
+ * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ */
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.addCommands = function addCommands () {
     var robot = this;
     this.commandManager = {
@@ -151,6 +178,12 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.addCommands = function addCo
     return this;
 }
 
+/**
+ * Execs a command.
+ * @param {string} command - The command
+ * @param {Object} parameters - The parameters of the command
+ * @param {http.ServerResponse} originalResponse - The response to use for the reply
+ */
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.exec = function ( command, parameters, originalResponse ) {
 
     var robot = this;
@@ -188,6 +221,10 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.exec = function ( command, p
     }
 }
 
+/**
+ * Updates the robot with the information coming from the robot's manager.
+ * @param {Object} values - The parameters of the command
+ */
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.update = function update ( values ) {    
     if ( typeof values !== 'undefined' )
     {

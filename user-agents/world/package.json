@@ -1,0 +1,12 @@
+{
+    "name": "robothree-world",
+    "version": "0.70",
+    "description": "A lightweight simulation envirnoment for robots - client side",
+    "author": "Loris Tissino (http://loris.tissino.it/)",
+    "license": "MIT",
+    "repository" :
+      { "type" : "git"
+      , "url" : "https://github.com/loristissino/RoboThree.git"
+      }
+}
+
