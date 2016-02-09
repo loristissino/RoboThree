@@ -63,7 +63,7 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.disableInfraredReader = func
  * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
  */
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.addVirtualPen = function addVirtualPen () {
-    this.infraredReader.codesMap['16619623'] = 'togglePen';
+    this.infraredReader.codesMap['16619623'] = { exec: 'togglePen', repeatOnKeptPressed: false };
     this.pen = { enabled: false };
     return this;
 }
