@@ -46,11 +46,13 @@ Node modules:
 ## Alternatives
 
 RoboThree aims to be lightweight and very simple in its implementation. If you are interested in something
-more realistic (and more complex) you could try:
+more realistic (and more complex) you might try:
 
 * [Autonomous Robot Simulator](http://sourceforge.net/projects/arsproject/)
 * [Gazebo](http://gazebosim.org/)
 * [v-rep](http://www.coppeliarobotics.com/downloads.html)
+* [OpenRAVE](http://www.openrave.org/)
+* [MORSE](https://www.openrobots.org/wiki/morse)
 
 ## History
 
