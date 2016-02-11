@@ -54,6 +54,8 @@ more realistic (and more complex) you might try:
 * [OpenRAVE](http://www.openrave.org/)
 * [MORSE](https://www.openrobots.org/wiki/morse)
 
+Some of these are available online at [The Construct](http://www.theconstructsim.com/).
+
 ## History
 
 * Release 0.01 (December 2nd, 2015): little more than a proof-of-concept.
