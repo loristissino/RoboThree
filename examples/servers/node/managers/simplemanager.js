@@ -1,15 +1,15 @@
 /**
- * @release 0.70
+ * @release 0.71
  * @license The MIT License (MIT)
 */
 
 var http = require('http');
 var extend = require('extend');
 
-var ThreeWheelDistanceSensingRobotBehavior = require('../behaviors/ThreeWheelDistanceSensingRobotBehavior');
+var ThreeWheelDistanceSensingRobotController = require('../controllers/ThreeWheelDistanceSensingRobotController');
 var ThreeWheelDistanceSensingRobotVirtualizer = require('../virtualizers/ThreeWheelDistanceSensingRobotVirtualizer');
 
-extend ( ThreeWheelDistanceSensingRobotBehavior.prototype, ThreeWheelDistanceSensingRobotVirtualizer.prototype );
+extend ( ThreeWheelDistanceSensingRobotController.prototype, ThreeWheelDistanceSensingRobotVirtualizer.prototype );
 
 extend ( global, require('EspruinoEmulationLayer') );
 
@@ -21,8 +21,8 @@ var roboThreeRelease = '0.70';
 var managerName = "Simple Robots' manager";
 
 var robots = {
-    green: new ThreeWheelDistanceSensingRobotBehavior('green'),
-    red: new ThreeWheelDistanceSensingRobotBehavior('red')/*,
+    green: new ThreeWheelDistanceSensingRobotController('green'),
+    red: new ThreeWheelDistanceSensingRobotController('red')/*,
     blue: new BasicRobot('blue'),
     yellow: new BasicRobot('yellow')*/
 };

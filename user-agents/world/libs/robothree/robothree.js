@@ -3,7 +3,7 @@
 /**
  * @classdesc Class representing a basic robot's representation.
  * @author Loris Tissino (http://loris.tissino.it)
- * @release 0.70
+ * @release 0.71
  * @license MIT
  * @constructor
  */
@@ -309,7 +309,7 @@ RobotRepresentation.prototype.getBottomImagePixelCoordinatesForObject = function
 /**
  * Represents a Robots' Manager (seen from the client side).
  * @author Loris Tissino (http://loris.tissino.it)
- * @release 0.70
+ * @release 0.71
  * @license MIT
  * @constructor
  * @param {Object} values
@@ -412,7 +412,7 @@ RobotsManager.prototype.update = function () {
  * Represents a Simulator.
  * @constructor
  * @author Loris Tissino (http://loris.tissino.it)
- * @release 0.70
+ * @release 0.71
  * @license MIT
  * @param {Object} defaults - The default values to be used during setup
  */
@@ -517,6 +517,26 @@ var Simulator = function ( defaults ) {
         $.each ( this.robotsManagers, function ( id, robotManager ) {
             robotManager.update();
         });
+        
+        if ( this.hasOwnProperty('checkedSphere') ) {
+            //if (this.checkedSphere.position.y <10)
+//                console.log((this.checkedSphere.position.y-6) + ',' + this.checkedSphere.userData.clock.getElapsedTime());
+                if (this.checkedSphere.userData.timeq0 === false && (this.checkedSphere.position.y-6 < 1000)) {
+                    this.checkedSphere.userData.timeq0 =  this.checkedSphere.userData.clock.getElapsedTime();
+                    this.checkedSphere.userData.posq0 = this.checkedSphere.position.y-6;
+                    console.log("setq0");
+                }
+                if (this.checkedSphere.userData.timeq1 === false && (this.checkedSphere.position.y-6 <= 0)) {
+                    this.checkedSphere.userData.timeq1 =  this.checkedSphere.userData.clock.getElapsedTime();
+                    this.checkedSphere.userData.posq1 = this.checkedSphere.position.y-6;
+                    console.log("setq1");
+                    console.log([ 
+                        this.scene.userData.gravity.y,
+                        this.checkedSphere.userData.posq1 - this.checkedSphere.userData.posq0,
+                        this.checkedSphere.userData.timeq1 - this.checkedSphere.userData.timeq0
+                        ].join(', '));
+                }
+        }
     }
 
     /**
@@ -527,8 +547,9 @@ var Simulator = function ( defaults ) {
 
         var values = $.extend ( {}, this.defaults.scene, options );
         this.scene = new Physijs.Scene( {reportSize: 10, fixedTimeStep: 1 / 60} );
-        this.scene.setGravity(values.gravity);
         this.scene.userData = { simulator: this };
+        this.scene.userData.gravity = values.gravity; // we keep a reference in order to be able to use it later...
+        this.scene.setGravity(this.scene.userData.gravity);
         this.scene.addEventListener( 'update', this.onUpdate.bind( this ) ); 
         return this;
     };
@@ -750,7 +771,7 @@ $(function () {
     function render () {
         if ( simulator.gui.userData.controls.simulate )
         {
-            simulator.scene.simulate();
+            simulator.scene.simulate( undefined, 2 );
         }
         requestAnimationFrame ( render );
         simulator.renderer.render ( simulator.scene, simulator.usedCamera );

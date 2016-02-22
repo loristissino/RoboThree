@@ -4,7 +4,7 @@
  * @classdesc Class representing a three-wheeled distance-sensing robot's representation.
  * @constructor
  * @author Loris Tissino (http://loris.tissino.it)
- * @release 0.70
+ * @release 0.71
  * @license MIT
  * @extends RobotRepresentation
  */
@@ -241,7 +241,7 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addArm = function addArm 
     // this is an experiment, not yet completed
     
     this.arm = new Physijs.BoxMesh(
-        new THREE.BoxGeometry( 40, 5, 1 ),
+        new THREE.BoxGeometry( 100, 5, 1 ),
         this.getLambertPjsMaterial( { color: 0x333333, opacity: 0.5 } ),
         20
     );
@@ -249,8 +249,11 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addArm = function addArm 
     this.arm.name = 'arm';
     this.arm.castShadow = true;
     this.arm.receiveShadow = true;
+    this.arm.__dirtyPosition = true;
+    this.arm.__dirtyRotation = true;
 
-    this.scene.add ( this.arm );
+    //this.chassis.add ( this.arm );
+    this.scene.add (this.arm);
     
     var constraintPosition = this.arm.position.clone().add( new THREE.Vector3 ( 0, -2.5, 0 ) );
     
@@ -262,7 +265,6 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addArm = function addArm 
     this.armConstraint.setLinearUpperLimit( new THREE.Vector3( 0, 0, 0 ) ); // sets the upper end of the linear movement along the x, y, and z axes.
     this.armConstraint.setAngularLowerLimit( new THREE.Vector3( 0, -Math.PI, 0 ) ); // sets the lower end of the angular movement, in radians, along the x, y, and z axes.
     this.armConstraint.setAngularUpperLimit( new THREE.Vector3( 0, Math.PI, 0 ) ); // sets the upper end of the angular movement, in radians, along the x, y, and z axes.
-    
     /*
     this.armConstraint.configureAngularMotor(
         which, // which angular motor to configure - 0,1,2 match x,y,z
@@ -666,12 +668,9 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.process = function proces
     /* manage outputs */
     
     
-    /*
-    this.arm.rotateOnAxis ( new THREE.Vector3(0, 1, 0), 0.01 );
-    this.arm.__dirtyPosition = true;
-    this.arm.__dirtyRotation = true;
-    */
-
+    //this.arm.__dirtyPosition = true;
+    //this.arm.__dirtyRotation = true;
+    //this.arm.rotateOnAxis ( new THREE.Vector3(0, 1, 0), 0.01 );
     
     for (var i = 0; i< this.registeredProcessFunctions.length; i++ ) {
         this.registeredProcessFunctions[i]( );
@@ -690,7 +689,7 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.update = function update 
     if (!this.isBuilt) {
         return;
     }
-
+    
     this.batterypack.material.color.copy ( this.batterypack.userData.normalColor );
     
     this.receivedData = data;

@@ -1,10 +1,10 @@
 var extend = require('extend');
 
 /**
- * @classdesc Mixin providing methods for the virtualization of a robot's behavior.
+ * @classdesc Mixin providing methods for the virtualization of a robot's application controller.
  * @mixin
  * @author Loris Tissino (http://loris.tissino.it)
- * @release 0.70
+ * @release 0.71
  * @license MIT
  * @constructor
  */
@@ -13,7 +13,7 @@ var ThreeWheelDistanceSensingRobotVirtualizer = function ( ) {
 
 /**
  * Creates the pins needed.
- * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ * @return {ThreeWheelDistanceSensingRobotController} - The controller
  */
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.createPins = function createPins () {
     var availablePins = ['B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B12', 'C12', 'C15', 'C0', 'C1', 'C2', 'C3', 'A0', 'A1', '3.3', 'A15', 'A14', 'A13', 'A10', 'A9', 'A8', 'C11', 'C10', 'C9', 'C8', 'C7', 'C6', 'C5', 'C4', 'B15', 'B14', 'B13', '3.3', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'B0', 'B1', 'B10', 'B11', 'A11', 'A12', 'C13', 'C14', 'D0', 'D1', 'D2'];
@@ -40,7 +40,7 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.createPins = function create
 /**
  * Enables the infrared reader.
  * @override
- * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ * @return {ThreeWheelDistanceSensingRobotController} - The controller
  */
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.enableInfraredReader = function enableInfraredReader () {
     this.infraredReader.code = -1;
@@ -51,7 +51,7 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.enableInfraredReader = funct
 /**
  * Disables the infrared reader.
  * @override
- * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ * @return {ThreeWheelDistanceSensingRobotController} - The controller
  */
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.disableInfraredReader = function disableInfraredReader () {
     delete this.registeredCallBacks.infraredReader;
@@ -60,7 +60,7 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.disableInfraredReader = func
 
 /**
  * Adds a virtual pen.
- * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ * @return {ThreeWheelDistanceSensingRobotController} - The controller
  */
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.addVirtualPen = function addVirtualPen () {
     this.infraredReader.codesMap['16619623'] = { exec: 'togglePen', repeatOnKeptPressed: false };
@@ -70,7 +70,7 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.addVirtualPen = function add
 
 /**
  * Toggles the virtual pen.
- * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ * @return {ThreeWheelDistanceSensingRobotController} - The controller
  */
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.togglePen = function () {
     this.pen.enabled = !this.pen.enabled;
@@ -78,7 +78,7 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.togglePen = function () {
 
 /**
  * Adds commands.
- * @return {ThreeWheelDistanceSensingRobotBehavior} - The behavior
+ * @return {ThreeWheelDistanceSensingRobotController} - The controller
  */
 ThreeWheelDistanceSensingRobotVirtualizer.prototype.addCommands = function addCommands () {
     var robot = this;

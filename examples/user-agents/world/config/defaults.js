@@ -86,7 +86,7 @@ var simulationDefaults = {
     },
     
     scene: {
-        gravity: new THREE.Vector3(0, -30, 0),
+        gravity: new THREE.Vector3(0, -40, 0),
     },
     renderer: {
         antialias: true,

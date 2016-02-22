@@ -18,7 +18,7 @@ var guiFactory = function ( simulator ) {
     function setPosAndShade(obj) {
         obj.position.set(
                 Math.random() * 100 - 50,
-                30,
+                20,
                 Math.random() * 100 - 50
         );
 
@@ -79,7 +79,7 @@ var guiFactory = function ( simulator ) {
             var sphere = new Physijs.SphereMesh(
                 new THREE.SphereGeometry(6, 32),
                 getMaterial( this.meshColor ),
-                200
+                50
             );
             setPosAndShade(sphere);
             simulator.scene.add(sphere);
@@ -204,7 +204,7 @@ var guiFactory = function ( simulator ) {
     var camera = gui.addFolder("Camera");
     
     camera.add(controls, 'camPositionX', -400, 400).onChange(controls.changeCamera);
-    camera.add(controls, 'camPositionY', 0, 400).onChange(controls.changeCamera);
+    camera.add(controls, 'camPositionY', 0, 800).onChange(controls.changeCamera);
     camera.add(controls, 'camPositionZ', -400, 400).onChange(controls.changeCamera);
     camera.add(controls, 'camFov', 1, 100).onChange(controls.changeCamera);
     camera.add(controls, 'camLookAtX', -400, 400).onChange(controls.changeCamera);
