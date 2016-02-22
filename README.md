@@ -83,3 +83,5 @@ Some of these are available online at [The Construct](http://www.theconstructsim
 * Release 0.61 (February 6th, 2016): minor code enhancements
 
 * Release 0.70 (February 7th, 2016): added jsdoc comments to source code; renamed a file
+
+* Release 0.71 (February 22nd, 2016): renamed class *Behavior to *Controller; updated documentation
