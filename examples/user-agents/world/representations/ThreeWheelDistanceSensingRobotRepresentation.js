@@ -154,8 +154,8 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.addBody = function addBod
     
     squareMesh.position.set ( -1, 2.5, 0 );
     
-    var cylinderBSP = new ThreeBSP(cylinderMesh);
-    var squareBSP = new ThreeBSP(squareMesh);
+    var cylinderBSP = new ThreeBSP( cylinderMesh );
+    var squareBSP = new ThreeBSP( squareMesh );
 
     var resultBSP = cylinderBSP.subtract ( squareBSP );
     
@@ -672,7 +672,7 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.process = function proces
     //this.arm.__dirtyRotation = true;
     //this.arm.rotateOnAxis ( new THREE.Vector3(0, 1, 0), 0.01 );
     
-    for (var i = 0; i< this.registeredProcessFunctions.length; i++ ) {
+    for ( var i = 0; i< this.registeredProcessFunctions.length; i++ ) {
         this.registeredProcessFunctions[i]( );
     }
     
@@ -686,7 +686,7 @@ ThreeWheelDistanceSensingRobotRepresentation.prototype.process = function proces
  */
 ThreeWheelDistanceSensingRobotRepresentation.prototype.update = function update ( data ) {
     
-    if (!this.isBuilt) {
+    if ( !this.isBuilt ) {
         return;
     }
     

@@ -146,7 +146,7 @@ RobotRepresentation.prototype.createWheel = function createWheel ( options ) {
 */
 RobotRepresentation.prototype.updateWheelSpeed = function updateWheelSpeed ( wheel, speed ) {
     if ( typeof speed !== 'undefined' ) {
-        this[wheel + 'WheelConstraint'].configureAngularMotor(2, 0.1, 0, 5*speed, 15000);
+        this[wheel + 'WheelConstraint'].configureAngularMotor( 2, 0.1, 0, 5*speed, 15000 );
     }
     return this;
 }
@@ -518,6 +518,7 @@ var Simulator = function ( defaults ) {
             robotManager.update();
         });
         
+        /*
         if ( this.hasOwnProperty('checkedSphere') ) {
             //if (this.checkedSphere.position.y <10)
 //                console.log((this.checkedSphere.position.y-6) + ',' + this.checkedSphere.userData.clock.getElapsedTime());
@@ -536,7 +537,7 @@ var Simulator = function ( defaults ) {
                         this.checkedSphere.userData.timeq1 - this.checkedSphere.userData.timeq0
                         ].join(', '));
                 }
-        }
+        }*/
     }
 
     /**

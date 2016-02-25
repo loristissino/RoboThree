@@ -33,7 +33,6 @@ ThreeWheelDistanceSensingRobotVirtualizer.prototype.createPins = function create
         global[aliases[i].source] = global[aliases[i].target];
     }
     this.registeredCallBacks = {};
-    console.log ('pins created');
     return this;
 }
 
